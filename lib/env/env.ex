@@ -13,8 +13,8 @@ defmodule Lisp.Env do
     GenServer.call(pid, {:lookup, sym})
   end
 
-  def define(pid, sym, value) do
-    GenServer.cast(pid, {:define, sym, value})
+  def defun(pid, sym, value) do
+    GenServer.cast(pid, {:defun, sym, value})
   end
 
   def all_vars(pid) do
@@ -35,11 +35,7 @@ defmodule Lisp.Env do
     {:reply, vars, vars}
   end
 
-  def handle_cast({:define, sym, value}, vars) do
-    if Map.has_key?(vars, sym) do
-      raise "Tried to redefine immutable variable #{sym} to value #{value}"
-    else
-      {:noreply, Map.put(vars, sym, value)}
-    end
+  def handle_cast({:defun, sym, value}, vars) do
+    {:noreply, Map.put(vars, sym, value)}
   end
 end

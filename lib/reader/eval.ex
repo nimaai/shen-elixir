@@ -4,12 +4,12 @@ defmodule Lisp.Reader.Eval do
   alias Lisp.Lambda
 
   @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
-  def eval([:define, sym | body], env) when is_atom(sym) do
-    Env.define(env, sym, apply(&eval(&1, env), body))
+  def eval([:defun, sym | body], env) when is_atom(sym) do
+    Env.defun(env, sym, apply(&eval(&1, env), body))
   end
 
-  def eval([:define, [f | params] | body], env) do
-    Env.define(env, f, %Lambda{params: params, body: body, env: env})
+  def eval([:defun, [f | params] | body], env) do
+    Env.defun(env, f, %Lambda{params: params, body: body, env: env})
   end
 
   def eval([:lambda, params | body], env) do
