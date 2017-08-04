@@ -13,8 +13,8 @@ defmodule Lisp.Reader.Eval do
     %Lambda{params: params, body: body, env: env}
   end
 
-  def eval([:quote, arg], _env) do
-    arg
+  def eval([:freeze | body], env) do
+    %Lambda{params: [], body: body, env: env}
   end
 
   def eval([:if, condition, then_form, else_form], env) do
