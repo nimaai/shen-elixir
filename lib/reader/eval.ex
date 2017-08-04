@@ -2,13 +2,10 @@ defmodule Lisp.Reader.Eval do
   alias Lisp.Types
   alias Lisp.Env
   alias Lisp.Lambda
+  require IEx
 
   @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
-  def eval([:defun, sym | body], env) when is_atom(sym) do
-    Env.defun(env, sym, apply(&eval(&1, env), body))
-  end
-
-  def eval([:defun, [f | params] | body], env) do
+  def eval([:defun, f, params | body], env) do
     Env.defun(env, f, %Lambda{params: params, body: body, env: env})
   end
 
