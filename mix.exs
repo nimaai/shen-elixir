@@ -27,7 +27,7 @@ defmodule Lisp.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:dialyxir, "~> 0.3.5", only: [:dev]},
+    [{:dialyxir, "~> 0.5", only: [:dev], runtime: false},
      {:credo,    "~> 0.4.5", only: [:dev]}]
   end
 end
