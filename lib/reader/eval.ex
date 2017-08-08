@@ -1,12 +1,14 @@
 defmodule Lisp.Reader.Eval do
   alias Lisp.Types
-  alias Lisp.Env
+  alias Lisp.Bindings
   alias Lisp.Lambda
   require IEx
 
-  @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
+  # @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
   def eval([:defun, f, params | body], env) do
-    Env.defun(env, f, %Lambda{params: params, body: body, env: env})
+    Bindings.define(env[:global_functions],
+                    f,
+                    %Lambda{params: params, body: body, env: env})
   end
 
   def eval([:lambda, params | body], env) do
@@ -32,13 +34,13 @@ defmodule Lisp.Reader.Eval do
         eval(arg, env)
     # If the argument is a symbol, look it up in the env.
       arg when is_atom(arg) ->
-        Env.lookup(env, arg)
+        Bindings.lookup(env, arg)
     # Otherwise, just return it.
       arg ->
         arg
     end)
 
-    case Env.lookup(env, f) do
+    case Bindings.lookup(env, f) do
       fun when is_function(fun) ->
         fun.(partially_evaluated)
       lambda = %Lambda{} ->
@@ -49,7 +51,7 @@ defmodule Lisp.Reader.Eval do
   end
 
   def eval(term, env) when is_atom(term) do
-    Env.lookup(env, term)
+    Bindings.lookup(env, term)
   end
 
   def eval(term, _env) do

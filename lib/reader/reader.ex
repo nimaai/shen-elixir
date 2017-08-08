@@ -164,7 +164,7 @@ end
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  @spec read_input(pid, non_neg_integer, [String.t]) :: nil
+  # @spec read_input(pid, non_neg_integer, [String.t]) :: nil
   def read_input(env, num \\ 0, read_so_far \\ []) do
     tokens =
       "lixp(#{num})> "

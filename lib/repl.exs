@@ -1,7 +1,7 @@
-alias Lisp.Env
+alias Lisp.Bindings
 alias Lisp.Reader
-alias Lisp.BuiltIns
+alias Lisp.Primitives
 
-{:ok, pid} = Env.start_link(BuiltIns.std_env)
+{:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
 
-Reader.read_input pid
+Reader.read_input %{functions: functions_pid}

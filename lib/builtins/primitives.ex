@@ -1,4 +1,4 @@
-defmodule Lisp.BuiltIns do
+defmodule Lisp.Primitives do
   @moduledoc """
     Contains built-in functions that would be tedious for users to constantly
     implement for themselves.
@@ -104,7 +104,7 @@ defmodule Lisp.BuiltIns do
     Returns a hashmap that maps Lisp symbols (e.g. 'begin, '+, 'display) to the
     corresponding Elixir function.
   """
-  def std_env do
+  def mapping do
     %{
       +: &add/1,
       -: &subtract/1,

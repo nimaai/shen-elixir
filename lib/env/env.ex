@@ -1,40 +1,27 @@
 defmodule Lisp.Env do
-  @moduledoc """
-`   A GenServer that stores the values of all variables`
-  """
-  use GenServer
+  alias Lisp.Bindings
 
-  def start_link(vars) do
-    GenServer.start_link(__MODULE__, {:ok, vars})
+  def lookup_local(%{locals: locals}, sym) do
+    lookup_local_helper(locals, sym)
   end
 
-  def lookup(pid, sym) do
-    GenServer.call(pid, {:lookup, sym})
+  def lookup_global(%{globals: pid}, sym) do
+    Bindings.lookup(pid, sym)
   end
 
-  def defun(pid, sym, value) do
-    GenServer.cast(pid, {:defun, sym, value})
+  defp lookup_local_helper(%{local: locals, enclosing: enclosing}, sym) do
+    if val = locals[sym] do
+      val
+    else
+      lookup_local_helper(enclosing, sym)
+    end
   end
 
-  def all_vars(pid) do
-    GenServer.call(pid, :all_vars)
+  defp lookup_local_helper(locals, sym) do
+    locals[sym]
   end
 
-  ## Callbacks
-
-  def init({:ok, vars}) do
-    {:ok, vars}
-  end
-
-  def handle_call({:lookup, sym}, _from, vars) do
-    {:reply, Map.get(vars, sym), vars}
-  end
-
-  def handle_call(:all_vars, _from, vars) do
-    {:reply, vars, vars}
-  end
-
-  def handle_cast({:defun, sym, value}, vars) do
-    {:noreply, Map.put(vars, sym, value)}
+  def lookup_function(%{functions: pid}, sym) do
+    Bindings.lookup(pid, sym)
   end
 end

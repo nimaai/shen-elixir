@@ -1,6 +1,6 @@
 defmodule Lisp.Lambda do
   alias Lisp.Reader.Eval
-  alias Lisp.Env
+  alias Lisp.Bindings
   require IEx
 
   defstruct params: [], body: [], env: %{}
@@ -10,8 +10,8 @@ defmodule Lisp.Lambda do
       params
       |> Enum.zip(args)
       |> Map.new
-      |> Map.merge(if is_pid(env), do: Env.all_vars(env), else: env)
-      |> Env.start_link
+      |> Map.merge(if is_pid(env), do: Bindings.bindings(env), else: env)
+      |> Bindings.start_link
 
     apply(&Eval.eval(&1, new_env), body)
   end
