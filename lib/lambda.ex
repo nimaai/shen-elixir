@@ -10,7 +10,7 @@ defmodule Lisp.Lambda do
       params
       |> Enum.zip(args)
       |> Map.new
-      |> Map.merge(if is_pid(env), do: Bindings.bindings(env), else: env)
+      |> Map.merge(env[:locals])
       |> Bindings.start_link
 
     apply(&Eval.eval(&1, new_env), body)

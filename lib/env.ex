@@ -1,5 +1,6 @@
 defmodule Lisp.Env do
   alias Lisp.Bindings
+  require IEx
 
   def lookup_local(%{locals: locals}, sym) do
     lookup_local_helper(locals, sym)
@@ -22,6 +23,7 @@ defmodule Lisp.Env do
   end
 
   def lookup_function(%{functions: pid}, sym) do
+    IEx.pry
     Bindings.lookup(pid, sym)
   end
 end
