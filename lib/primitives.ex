@@ -106,10 +106,9 @@ defmodule Lisp.Primitives do
   """
   def mapping do
     %{
-      +: &+/2
       # +: &add/1,
       # -: &subtract/1,
-      # *: &multiply/1,
+      *: &multiply/1,
       # /: &divide/1,
       # ^: &pow/1,
       # =: &equal/1,

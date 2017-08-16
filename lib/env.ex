@@ -23,7 +23,6 @@ defmodule Lisp.Env do
   end
 
   def lookup_function(%{functions: pid}, sym) do
-    IEx.pry
     Bindings.lookup(pid, sym)
   end
 end

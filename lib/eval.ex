@@ -7,7 +7,7 @@ defmodule Lisp.Reader.Eval do
 
   # @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
   def eval([:defun, f, params | body], env) do
-    Bindings.define(env[:global_functions],
+    Bindings.define(env[:functions],
                     f,
                     %Lambda{params: params, body: body, env: env})
   end
@@ -30,7 +30,8 @@ defmodule Lisp.Reader.Eval do
 
   def eval([f | args], env) when is_atom(f) do
     fun = Env.lookup_function(env, f)
-    apply(fun, Enum.map(args, fn arg -> eval(arg, env) end))
+    evaled_args = Enum.map(args, &eval(&1, env))
+    Lambda.call(fun, evaled_args)
   end
 
   # def eval([f | args], env) do
@@ -57,10 +58,15 @@ defmodule Lisp.Reader.Eval do
   # end
 
   def eval(term, env) when is_atom(term) do
-    env[:locals][term] or term
+    val = env[:locals][term]
+    unless is_nil(val) do
+      val
+    else
+      raise "Unbound variable #{term}"
+    end
   end
 
-  # def eval(term, _env) do
-  #   term
-  # end
+  def eval(term, _env) do
+    term
+  end
 end

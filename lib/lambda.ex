@@ -6,12 +6,17 @@ defmodule Lisp.Lambda do
   defstruct params: [], body: [], env: %{}
 
   def call(%Lisp.Lambda{params: params, body: body, env: env}, args) do
-    {:ok, new_env} =
+    new_locals =
       params
       |> Enum.zip(args)
       |> Map.new
       |> Map.merge(env[:locals])
-      |> Bindings.start_link
+
+    new_env = %{
+      locals: new_locals,
+      globals: env[:globals],
+      functions: env[:functions]
+    }
 
     apply(&Eval.eval(&1, new_env), body)
   end
