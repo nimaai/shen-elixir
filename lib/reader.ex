@@ -133,6 +133,10 @@ defmodule Lisp.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+  defp lispy_print({:error, message}) do
+    "ERROR: #{message}"
+  end
+
   defp lispy_print(list) when is_list(list) do
     list
     |> Enum.map(&lispy_print/1)
@@ -160,10 +164,6 @@ defmodule Lisp.Reader do
     "nil"
   end
 
-  defp lispy_print({:error, message}) do
-    message
-  end
-
   defp lispy_print(term) do
     to_string term
   end
@@ -185,7 +185,7 @@ defmodule Lisp.Reader do
     try do
       Eval.eval(hd(x), env)
     catch
-      {:error, message} -> message
+      e -> e
     end
   end
 
@@ -217,6 +217,7 @@ defmodule Lisp.Reader do
         |> eval_catch(env)
         |> lispy_print
         |> IO.puts
+
         read_input(env, num + 1, [])
     end
   end
