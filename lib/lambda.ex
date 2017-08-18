@@ -1,6 +1,5 @@
 defmodule Lisp.Lambda do
   alias Lisp.Reader.Eval
-  alias Lisp.Bindings
   require IEx
 
   defstruct params: [], body: [], locals: %{}
@@ -12,9 +11,9 @@ defmodule Lisp.Lambda do
       |> Map.new
       |> Map.merge(locals)
 
-    {_, new_env} = Map.get_and_update(env,
-                                      :locals,
-                                      fn locals -> {locals, new_locals} end)
+    new_env = Map.update!(env,
+                          :locals,
+                          fn _ -> new_locals end)
 
     apply(&Eval.eval(&1, new_env), body)
   end
