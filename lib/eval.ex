@@ -15,8 +15,7 @@ defmodule Lisp.Reader.Eval do
     if is_atom(param) do
       %Lambda{params: [param], body: body, locals: env[:locals]}
     else
-      throw :error
-      # {:error, "Required argument is not a symbol"}
+      throw {:error, "Required argument is not a symbol"}
     end
   end
 
@@ -40,7 +39,6 @@ defmodule Lisp.Reader.Eval do
     fun = case f do
       f when is_atom(f) -> Env.lookup_function(env, f)
       f = [:lambda | _] -> eval(f, env)
-      _ -> f
     end
 
     evaled_args = Enum.map(args, &eval(&1, env))
@@ -52,8 +50,7 @@ defmodule Lisp.Reader.Eval do
     unless is_nil(val) do
       val
     else
-      throw :error
-      # {:error, "Unbound variable #{term}"}
+      throw {:error, "Unbound variable #{term}"}
     end
   end
 

@@ -27,8 +27,7 @@ defmodule Lisp.Env do
     if is_nil(gf) do
       lf = locals[sym]
       if is_nil(lf) do
-        throw :error
-        # {:error, "Undefined function #{sym}"}
+        throw {:error, "Undefined function #{sym}"}
       end
     else
       gf

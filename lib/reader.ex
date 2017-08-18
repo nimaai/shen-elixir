@@ -21,8 +21,7 @@ defmodule Lisp.Reader do
     cond do
       # If the token contains whitespace, it's not a bloody token.
       token =~ ~r/\s/ ->
-        throw :error
-        # {:error, "Unexpected whitespace found in token: #{token}"}
+        throw {:error, "Unexpected whitespace found in token: #{token}"}
       # If the token contains digits separated by a decimal point
       token =~ ~r/^\d+\.\d+$/ ->
         String.to_float token
@@ -40,8 +39,7 @@ defmodule Lisp.Reader do
       token =~ ~r/^[^\d\(\)\.',@#][^\(\)\.`',@#]*$/ ->
         String.to_atom token
       :else ->
-        throw :error
-        # {:error, "Cannot parse token: #{token}"}
+        throw {:error, "Cannot parse token: #{token}"}
     end
   end
 
@@ -57,8 +55,7 @@ defmodule Lisp.Reader do
   end
 
   def read([")" | _tokens]) do
-    throw :error
-    # {:error, "Unexpected list delimiter while reading"}
+    throw {:error, "Unexpected list delimiter while reading"}
   end
 
   def read(["{" | _tokens] = all_tokens) do
@@ -67,8 +64,7 @@ defmodule Lisp.Reader do
   end
 
   def read(["}" | _tokens]) do
-    throw :error
-    # {:error, "Unexpected tuple delimiter while reading"}
+    throw {:error, "Unexpected tuple delimiter while reading"}
   end
 
   def read([token | tokens]) do
@@ -187,18 +183,24 @@ defmodule Lisp.Reader do
 
   defp eval_catch(x, env) do
     try do
-      Eval.eval(x, env)
+      Eval.eval(hd(x), env)
     catch
-      :error -> "error"
+      {:error, message} -> message
     end
   end
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   # @spec read_input(pid, non_neg_integer, [String.t]) :: nil
-  def read_input(env, num \\ 0, read_so_far \\ []) do
-    tokens =
+  def read_input(env, num \\ 0, read_so_far \\ [], leading_text \\ nil) do
+    leading_text = if is_nil(leading_text) do
       "klambda(#{num})> "
+    else
+      leading_text
+    end
+
+    tokens =
+      leading_text
       |> IO.gets
       |> skip_newlines
       |> tokenise
@@ -207,7 +209,7 @@ defmodule Lisp.Reader do
       tokens == [":quit"] ->
         nil
       not check_parens(read_so_far ++ tokens) ->
-        read_input(env, num, read_so_far ++ tokens)
+        read_input(env, num, read_so_far ++ tokens, "")
       :else ->
         read_so_far
         |> Kernel.++(tokens)
