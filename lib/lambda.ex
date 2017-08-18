@@ -19,6 +19,7 @@ defmodule Lisp.Lambda do
   end
 
   def call(nil, _args) do
-    raise "SyntaxError: undefined function call"
+    throw :error
+    # {:error, "SyntaxError: undefined function call"}
   end
 end

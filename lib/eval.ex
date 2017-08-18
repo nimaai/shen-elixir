@@ -15,7 +15,8 @@ defmodule Lisp.Reader.Eval do
     if is_atom(param) do
       %Lambda{params: [param], body: body, locals: env[:locals]}
     else
-      raise "Required argument is not a symbol"
+      throw :error
+      # {:error, "Required argument is not a symbol"}
     end
   end
 
@@ -51,7 +52,8 @@ defmodule Lisp.Reader.Eval do
     unless is_nil(val) do
       val
     else
-      raise "Unbound variable #{term}"
+      throw :error
+      # {:error, "Unbound variable #{term}"}
     end
   end
 
