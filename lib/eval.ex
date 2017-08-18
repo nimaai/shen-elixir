@@ -9,15 +9,15 @@ defmodule Lisp.Reader.Eval do
   def eval([:defun, f, params | body], env) do
     Bindings.define(env[:functions],
                     f,
-                    %Lambda{params: params, body: body, env: env})
+                    %Lambda{params: params, body: body})
   end
 
   def eval([:lambda, params | body], env) do
-    %Lambda{params: params, body: body, env: env}
+    %Lambda{params: params, body: body, locals: env[:locals]}
   end
 
   def eval([:freeze | body], env) do
-    %Lambda{params: [], body: body, env: env}
+    %Lambda{params: [], body: body, locals: env[:locals]}
   end
 
   def eval([:if, condition, then_form, else_form], env) do
@@ -31,7 +31,15 @@ defmodule Lisp.Reader.Eval do
   def eval([f | args], env) when is_atom(f) do
     fun = Env.lookup_function(env, f)
     evaled_args = Enum.map(args, &eval(&1, env))
-    Lambda.call(fun, evaled_args)
+    eval_function_call(fun, evaled_args, env)
+  end
+
+  def eval_function_call(%Lambda{} = f, args, env) do
+    Lambda.call(f, args, env)
+  end
+
+  def eval_function_call(f, args, _env) when is_function(f) do
+    apply(f, args)
   end
 
   # def eval([f | args], env) do

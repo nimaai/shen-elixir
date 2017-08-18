@@ -108,7 +108,7 @@ defmodule Lisp.Primitives do
     %{
       # +: &add/1,
       # -: &subtract/1,
-      *: &multiply/1,
+      *: &*/2,
       # /: &divide/1,
       # ^: &pow/1,
       # =: &equal/1,
