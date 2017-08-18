@@ -28,42 +28,24 @@ defmodule Lisp.Reader.Eval do
     end
   end
 
-  def eval([f | args], env) when is_atom(f) do
-    fun = Env.lookup_function(env, f)
+  def eval([f | args], env) do
+    fun = case f do
+      f when is_atom(f) -> Env.lookup_function(env, f)
+      f = [:lambda | _] -> eval(f, env)
+      _ -> f
+    end
+
     evaled_args = Enum.map(args, &eval(&1, env))
     eval_function_call(fun, evaled_args, env)
   end
 
-  def eval_function_call(%Lambda{} = f, args, env) do
+  defp eval_function_call(%Lambda{} = f, args, env) do
     Lambda.call(f, args, env)
   end
 
-  def eval_function_call(f, args, _env) when is_function(f) do
+  defp eval_function_call(f, args, _env) when is_function(f) do
     apply(f, args)
   end
-
-  # def eval([f | args], env) do
-  #   partially_evaluated = Enum.map(args, fn
-  #   # If the argument is a list, `eval` it as well.
-  #     ([_x | _xs] = arg) ->
-  #       eval(arg, env)
-  #   # If the argument is a symbol, look it up in the env.
-  #     arg when is_atom(arg) ->
-  #       Bindings.lookup(env, arg)
-  #   # Otherwise, just return it.
-  #     arg ->
-  #       arg
-  #   end)
-
-  #   case Env.lookup_function(env, f) do
-  #     fun when is_function(fun) ->
-  #       fun.(partially_evaluated)
-  #     lambda = %Lambda{} ->
-  #       Lambda.call(lambda, partially_evaluated)
-  #     _ ->
-  #       Lambda.call(eval(f, env), partially_evaluated)
-  #   end
-  # end
 
   def eval(term, env) when is_atom(term) do
     val = env[:locals][term]
