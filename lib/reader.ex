@@ -1,4 +1,6 @@
 defmodule Lisp.Reader do
+  require IEx
+
   @moduledoc """
     Contains functions that read and evaluate Lisp code.
   """
@@ -164,11 +166,23 @@ end
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+defp skip_newlines(input) do
+  if input == "\n" do
+    new_input = IO.gets("")
+    skip_newlines(new_input)
+  else
+    input
+  end
+end
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   # @spec read_input(pid, non_neg_integer, [String.t]) :: nil
   def read_input(env, num \\ 0, read_so_far \\ []) do
     tokens =
-      "lixp(#{num})> "
+      "klambda(#{num})> "
       |> IO.gets
+      |> skip_newlines
       |> tokenise
 
     cond do
