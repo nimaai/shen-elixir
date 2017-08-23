@@ -71,10 +71,10 @@ defmodule Lisp.Reader.Eval do
 
   def eval(term, env) when is_atom(term) do
     val = env[:locals][term]
-    unless is_nil(val) do
-      val
+    if is_nil(val) do
+      term
     else
-      throw {:error, "Unbound variable #{term}"}
+      val
     end
   end
 
