@@ -1,4 +1,6 @@
 defmodule Lisp.Reader do
+  require IEx
+
   @moduledoc """
     Contains functions that read and evaluate Lisp code.
   """
@@ -19,7 +21,7 @@ defmodule Lisp.Reader do
     cond do
       # If the token contains whitespace, it's not a bloody token.
       token =~ ~r/\s/ ->
-        raise "Unexpected whitespace found in token: #{token}"
+        throw {:error, "Unexpected whitespace found in token: #{token}"}
       # If the token contains digits separated by a decimal point
       token =~ ~r/^\d+\.\d+$/ ->
         String.to_float token
@@ -37,11 +39,11 @@ defmodule Lisp.Reader do
       token =~ ~r/^[^\d\(\)\.',@#][^\(\)\.`',@#]*$/ ->
         String.to_atom token
       :else ->
-        raise "Cannot parse token: #{token}"
+        throw {:error, "Cannot parse token: #{token}"}
     end
   end
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   @spec read([String.t]) :: [Types.valid_term]
   def read([]) do
     []
@@ -53,7 +55,7 @@ defmodule Lisp.Reader do
   end
 
   def read([")" | _tokens]) do
-    raise "Unexpected list delimiter while reading"
+    throw {:error, "Unexpected list delimiter while reading"}
   end
 
   def read(["{" | _tokens] = all_tokens) do
@@ -62,14 +64,14 @@ defmodule Lisp.Reader do
   end
 
   def read(["}" | _tokens]) do
-    raise "Unexpected tuple delimiter while reading"
+    throw {:error, "Unexpected tuple delimiter while reading"}
   end
 
   def read([token | tokens]) do
     [atomise(token) | read(tokens)]
   end
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   @spec matching_paren_index([String.t], {String.t, String.t}) :: non_neg_integer | nil
   defp matching_paren_index(tokens, type \\ {"(", ")"}) do
@@ -100,7 +102,7 @@ defmodule Lisp.Reader do
     do_matching_paren_index(tokens, stack, type)
   end
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   @spec check_parens([String.t], [String.t]) :: boolean
   defp check_parens(tokens, stack \\ [])
@@ -129,60 +131,93 @@ defmodule Lisp.Reader do
     check_parens(tokens, stack)
   end
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-defp lispy_print(list) when is_list(list) do
-  list
-  |> Enum.map(&lispy_print/1)
-  |> Enum.join(" ")
-  |> (fn s -> "(#{s})" end).()
-end
+  defp lispy_print({:error, message}) do
+    "ERROR: #{message}"
+  end
 
-defp lispy_print(tuple) when is_tuple(tuple) do
-  tuple
-  |> Tuple.to_list
-  |> Enum.map(&lispy_print/1)
-  |> Enum.join(" ")
-  |> (fn s -> "{#{s}}" end).()
-end
+  defp lispy_print(list) when is_list(list) do
+    list
+    |> Enum.map(&lispy_print/1)
+    |> Enum.join(" ")
+    |> (fn s -> "(#{s})" end).()
+  end
 
-defp lispy_print(str) when is_binary(str) do
-  "\"" <> str <> "\""
-end
+  defp lispy_print(tuple) when is_tuple(tuple) do
+    tuple
+    |> Tuple.to_list
+    |> Enum.map(&lispy_print/1)
+    |> Enum.join(" ")
+    |> (fn s -> "{#{s}}" end).()
+  end
 
-defp lispy_print(%Lambda{params: params, body: body}) do
-  "<Lambda | Params: #{Enum.map(params, &lispy_print/1)} | Body: #{lispy_print(body)}>"
-end
+  defp lispy_print(str) when is_binary(str) do
+    "\"" <> str <> "\""
+  end
 
-defp lispy_print(nil) do
-  "nil"
-end
+  defp lispy_print(%Lambda{params: params, body: body}) do
+    "<Lambda | Params: #{Enum.map(params, &lispy_print/1)} | Body: #{lispy_print(body)}>"
+  end
 
-defp lispy_print(term) do
-  to_string term
-end
+  defp lispy_print(nil) do
+    "nil"
+  end
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  defp lispy_print(term) do
+    to_string term
+  end
 
-  @spec read_input(pid, non_neg_integer, [String.t]) :: nil
-  def read_input(env, num \\ 0, read_so_far \\ []) do
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  defp skip_newlines(input) do
+    if input == "\n" do
+      new_input = IO.gets("")
+      skip_newlines(new_input)
+    else
+      input
+    end
+  end
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  defp eval_catch(x, env) do
+    try do
+      Eval.eval(hd(x), env)
+    catch
+      e -> e
+    end
+  end
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  # @spec read_input(pid, non_neg_integer, [String.t]) :: nil
+  def read_input(env, num \\ 0, read_so_far \\ [], leading_text \\ nil) do
+    leading_text = if is_nil(leading_text) do
+      "klambda(#{num})> "
+    else
+      leading_text
+    end
+
     tokens =
-      "lixp(#{num})> "
+      leading_text
       |> IO.gets
+      |> skip_newlines
       |> tokenise
 
     cond do
       tokens == [":quit"] ->
         nil
       not check_parens(read_so_far ++ tokens) ->
-        read_input(env, num, read_so_far ++ tokens)
+        read_input(env, num, read_so_far ++ tokens, "")
       :else ->
         read_so_far
         |> Kernel.++(tokens)
         |> read
-        |> (fn x -> apply(&Eval.eval(&1, env), x) end).()
+        |> eval_catch(env)
         |> lispy_print
         |> IO.puts
+
         read_input(env, num + 1, [])
     end
   end

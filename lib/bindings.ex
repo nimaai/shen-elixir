@@ -1,4 +1,4 @@
-defmodule Lisp.Env do
+defmodule Lisp.Bindings do
   @moduledoc """
 `   A GenServer that stores the values of all variables`
   """
@@ -12,12 +12,12 @@ defmodule Lisp.Env do
     GenServer.call(pid, {:lookup, sym})
   end
 
-  def defun(pid, sym, value) do
-    GenServer.cast(pid, {:defun, sym, value})
+  def define(pid, sym, value) do
+    GenServer.cast(pid, {:define, sym, value})
   end
 
-  def all_vars(pid) do
-    GenServer.call(pid, :all_vars)
+  def all(pid) do
+    GenServer.call(pid, :all)
   end
 
   ## Callbacks
@@ -30,11 +30,11 @@ defmodule Lisp.Env do
     {:reply, Map.get(vars, sym), vars}
   end
 
-  def handle_call(:all_vars, _from, vars) do
+  def handle_call(:all, _from, vars) do
     {:reply, vars, vars}
   end
 
-  def handle_cast({:defun, sym, value}, vars) do
+  def handle_cast({:define, sym, value}, vars) do
     {:noreply, Map.put(vars, sym, value)}
   end
 end
