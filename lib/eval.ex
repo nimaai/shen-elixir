@@ -65,6 +65,10 @@ defmodule Lisp.Reader.Eval do
     eval_function_call(fun, evaled_args, env)
   end
 
+  def eval(term, _env) when is_boolean(term) do
+    term
+  end
+
   def eval(term, env) when is_atom(term) do
     val = env[:locals][term]
     unless is_nil(val) do
