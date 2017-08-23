@@ -9,7 +9,9 @@ defmodule Lisp.Primitives do
       >: &>/2,
       <: &</2,
       >=: &>=/2,
-      <=: &<=/2
+      <=: &<=/2,
+      and: &and/2,
+      or: &or/2,
       # ^: &pow/1,
       # =: &equal/1,
       # "/=": &not_equal/1,

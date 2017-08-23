@@ -3,8 +3,8 @@ defmodule Lisp.Reader.Eval do
   alias Lisp.Lambda
   alias Lisp.Env
   require IEx
+  require Integer
 
-  # @spec eval(Types.valid_term, pid) :: Types.valid_term | no_return
   def eval([:defun, f, params | body], env) do
     Bindings.define(env[:functions],
                     f,
@@ -27,12 +27,32 @@ defmodule Lisp.Reader.Eval do
     %Lambda{params: [], body: body, locals: env[:locals]}
   end
 
-  def eval([:if, condition, then_form, else_form], env) do
+  def eval([:if, condition, consequent, alternative], env) do
     if eval(condition, env) == true do
-      eval(then_form, env)
+      eval(consequent, env)
     else
-      eval(else_form, env)
+      eval(alternative, env)
     end
+  end
+
+  def eval([:cond, condition, consequent | rest], env) do
+    if [condition, consequent | rest] |> length |> Integer.is_odd do
+      throw {:error, "Unbalanced cond clauses"}
+    end
+
+    if eval(condition, env) == true do
+      eval(consequent, env)
+    else
+      eval([:cond | rest], env)
+    end
+  end
+
+  def eval([:cond, _condition], _env) do
+    throw {:error, "Unbalanced cond clause"}
+  end
+
+  def eval([:cond], _env) do
+    throw {:error, "No matching cond clause"}
   end
 
   def eval([f | args], env) do
