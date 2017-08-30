@@ -59,6 +59,23 @@ defmodule Lisp.Reader.Eval do
     throw {:error, "No matching cond clause"}
   end
 
+  def eval([:"trap-error", body, handler], env) do
+    result = eval(body, env)
+    case result do
+      exception = {:"simple-error", _message} ->
+        eval([handler, exception], env)
+      true -> result
+    end
+  end
+
+  def eval([:"simple-error", message], _env) do
+    throw {:"simple-error", message}
+  end
+
+  def eval([:"error-to-string", [:"simple-error", message]], _env) do
+    message
+  end
+
   def eval([f | args], env) do
     fun = case f do
       f when is_atom(f) -> Env.lookup_function(env, f)
