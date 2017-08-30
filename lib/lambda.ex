@@ -4,10 +4,10 @@ defmodule Lisp.Lambda do
 
   defstruct params: [], body: [], locals: %{}
 
-  def call(%Lisp.Lambda{params: params, body: body, locals: locals}, args, env) do
+  def call(%Lisp.Lambda{params: params, body: body, locals: locals}, evaled_args, env) do
     new_locals =
       params
-      |> Enum.zip(args)
+      |> Enum.zip(evaled_args)
       |> Map.new
       |> Map.merge(locals)
 

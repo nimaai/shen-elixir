@@ -19,8 +19,12 @@ defmodule Lisp.Reader.Eval do
     end
   end
 
-  def eval([:let, sym, value | body], env) do
-    Lambda.call(%Lambda{params: [sym], body: body}, [value], env)
+  def eval([:let, sym, value_expr | body], env) do
+    Lambda.call(
+      %Lambda{params: [sym], body: body},
+      [eval(value_expr, env)],
+      env
+    )
   end
 
   def eval([:freeze | body], env) do
