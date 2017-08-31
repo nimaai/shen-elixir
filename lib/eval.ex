@@ -1,6 +1,7 @@
 defmodule Lisp.Reader.Eval do
   alias Lisp.Bindings
   alias Lisp.Lambda
+  alias Lisp.Cont
   alias Lisp.Env
   require IEx
   require Integer
@@ -11,9 +12,9 @@ defmodule Lisp.Reader.Eval do
                     %Lambda{params: params, body: body})
   end
 
-  def eval([:lambda, param | body], env) do
+  def eval([:lambda, param | body], _env) do
     if is_atom(param) do
-      %Lambda{params: [param], body: body, locals: env[:locals]}
+      %Lambda{params: [param], body: body}
     else
       throw {:error, "Required argument is not a symbol"}
     end
@@ -27,8 +28,8 @@ defmodule Lisp.Reader.Eval do
     )
   end
 
-  def eval([:freeze | body], env) do
-    %Lambda{params: [], body: body, locals: env[:locals]}
+  def eval([:freeze, body], env) do
+    %Cont{body: body, locals: env[:locals]}
   end
 
   def eval([:if, condition, consequent, alternative], env) do

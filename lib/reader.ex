@@ -8,6 +8,7 @@ defmodule Lisp.Reader do
   alias Lisp.Types
   alias Lisp.Reader.Eval
   alias Lisp.Lambda
+  alias Lisp.Cont
 
   @spec tokenise(String.t) :: [String.t]
   def tokenise(expr) do
@@ -158,6 +159,10 @@ defmodule Lisp.Reader do
 
   defp lispy_print(%Lambda{params: params, body: body}) do
     "<Lambda | Params: #{Enum.map(params, &lispy_print/1)} | Body: #{lispy_print(body)}>"
+  end
+
+  defp lispy_print(%Cont{body: body, locals: locals}) do
+    "<Cont | Body: #{lispy_print(body)}> | Locals: #{Enum.map(locals, &lispy_print/1)}>"
   end
 
   defp lispy_print(nil) do
