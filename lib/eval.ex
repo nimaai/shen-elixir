@@ -77,6 +77,19 @@ defmodule Lisp.Reader.Eval do
     message
   end
 
+  def eval([:set, global_var, value], env) do
+    :ok = Bindings.define(env[:globals], global_var, value)
+    value
+  end
+
+  def eval([:value, global_var], env) do
+    Env.lookup_global(env, global_var)
+  end
+
+  def eval([:intern, name], _env) do
+    String.to_atom(name)
+  end
+
   def eval([f | args], env) do
     fun = case f do
       f when is_atom(f) -> Env.lookup_function(env, f)
