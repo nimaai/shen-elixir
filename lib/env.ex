@@ -1,26 +1,24 @@
 defmodule Lisp.Env do
   alias Lisp.Bindings
+  alias Lisp.Lambda
+  alias Lisp.Primitives
   require IEx
 
-  # def lookup_local(%{locals: locals}, sym) do
-  #   locals[sym]
-  # end
+  def init do
+    {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
+    {:ok, globals_pid}= Bindings.start_link(%{})
+    %{locals: %{},
+      globals: globals_pid,
+      functions: functions_pid}
+  end
 
   def lookup_global(%{globals: pid}, sym) do
     Bindings.lookup(pid, sym)
   end
 
-  # defp lookup_local_helper(%{local: locals, enclosing: enclosing}, sym) do
-  #   if val = locals[sym] do
-  #     val
-  #   else
-  #     lookup_local_helper(enclosing, sym)
-  #   end
-  # end
-
-  # defp lookup_local_helper(locals, sym) do
-  #   locals[sym]
-  # end
+  def define_global(%{globals: pid}, sym, val) do
+    Bindings.define(pid, sym, val)
+  end
 
   def lookup_function(%{functions: pid, locals: locals}, sym) do
     gf = Bindings.lookup(pid, sym)
@@ -32,5 +30,9 @@ defmodule Lisp.Env do
     else
       gf
     end
+  end
+
+  def define_function(%{functions: pid}, sym, lambda = %Lambda{}) do
+    Bindings.define(pid, sym, lambda)
   end
 end

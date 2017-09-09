@@ -1,15 +1,15 @@
 defmodule Lisp.Reader.Eval do
-  alias Lisp.Bindings
   alias Lisp.Lambda
   alias Lisp.Cont
   alias Lisp.Env
   require IEx
   require Integer
 
-  def eval([:defun, f, params | body], env) do
-    Bindings.define(env[:functions],
-                    f,
-                    %Lambda{params: params, body: body})
+  def eval([:defun, func, params | body], env) do
+    :ok = Env.define_function(env,
+                              func,
+                              %Lambda{params: params, body: body})
+    func
   end
 
   def eval([:lambda, param | body], _env) do
@@ -77,8 +77,8 @@ defmodule Lisp.Reader.Eval do
     message
   end
 
-  def eval([:set, global_var, value], env) do
-    :ok = Bindings.define(env[:globals], global_var, value)
+  def eval([:set, sym, value], env) do
+    :ok = Env.define_global(env, sym, value)
     value
   end
 
