@@ -31,7 +31,7 @@ defmodule Lisp.Reader do
       token == "false" ->
         false
       # If the token is enclosed in double quotes
-      token =~ ~r/^".+"$/ ->
+      token =~ ~r/^".*"$/ ->
         String.slice(token, 1, String.length(token) - 2)
       # If the token is a valid identifier
       token =~ ~r/^[^\d\(\)\.',@#][^\(\)\.`',@#]*$/ ->
@@ -133,12 +133,12 @@ defmodule Lisp.Reader do
     "\"" <> str <> "\""
   end
 
-  defp lispy_print(%Lambda{params: params, body: body}) do
-    "<Lambda | Params: #{Enum.map(params, &lispy_print/1)} | Body: #{lispy_print(body)}>"
+  defp lispy_print(%Cont{} = cont) do
+    Cont.to_string(cont)
   end
 
-  defp lispy_print(%Cont{body: body, locals: locals}) do
-    "<Cont | Body: #{lispy_print(body)}> | Locals: #{Enum.map(locals, &lispy_print/1)}>"
+  defp lispy_print(%Lambda{} = lambda) do
+    Lambda.to_string(lambda)
   end
 
   defp lispy_print(nil) do

@@ -78,8 +78,9 @@ defmodule Lisp.Reader.Eval do
   end
 
   def eval([:set, sym, value], env) do
-    :ok = Env.define_global(env, sym, value)
-    value
+    evaled_value = eval(value, env)
+    :ok = Env.define_global(env, sym, evaled_value)
+    evaled_value
   end
 
   def eval([:value, global_var], env) do
@@ -88,6 +89,43 @@ defmodule Lisp.Reader.Eval do
 
   def eval([:intern, name], _env) do
     String.to_atom(name)
+  end
+
+  def eval([:string?, arg], _env) do
+    is_bitstring(arg)
+  end
+
+  def eval([:pos, arg, n], _env) do
+    unit = String.at(arg, n)
+    if is_nil(unit) do
+      throw {:error, "String index is out bounds"}
+    else
+      unit
+    end
+  end
+
+  def eval([:tlstr, arg], _env) do
+    if String.length(arg) == 0 do
+      throw {:error, "Argument is empty string"}
+    else
+      IEx.pry
+      {_, tlstr} = String.split_at(arg, 1)
+      tlstr
+    end
+  end
+
+  def eval([:cn, s1, s2], _env) do
+    s1 <> s2
+  end
+
+  def eval([:str, arg], env) do
+    evaled_arg = eval(arg, env)
+    cond do
+      is_bitstring(evaled_arg) -> "\"" <> evaled_arg <> "\""
+      %Lambda{} = evaled_arg -> Lambda.to_string(evaled_arg)
+      %Cont{} = evaled_arg -> Cont.to_string(evaled_arg)
+      true -> to_string(evaled_arg)
+    end
   end
 
   def eval([f | args], env) do

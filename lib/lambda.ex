@@ -18,4 +18,8 @@ defmodule Lisp.Lambda do
   def call(nil, _args) do
     throw {:error, "SyntaxError: undefined function call"}
   end
+
+  def to_string(%Lisp.Lambda{params: params} = lambda) do
+    "<lambda ...>"
+  end
 end
