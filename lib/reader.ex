@@ -5,19 +5,16 @@ defmodule Lisp.Reader do
     Contains functions that read and evaluate Lisp code.
   """
 
-  alias Lisp.Types
   alias Lisp.Reader.Eval
   alias Lisp.Lambda
   alias Lisp.Cont
 
-  @spec tokenise(String.t) :: [String.t]
   def tokenise(expr) do
     expr
-    |> String.replace(~r/([\{\}\(\)])/, " \\1 ")
+    |> String.replace(~r/([\(\)])/, " \\1 ")
     |> String.split
   end
 
-  @spec atomise(String.t) :: Types.valid_term
   def atomise(token) do
     cond do
       # If the token contains whitespace, it's not a bloody token.
@@ -45,7 +42,6 @@ defmodule Lisp.Reader do
   end
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  @spec read([String.t]) :: [Types.valid_term]
   def read([]) do
     []
   end
@@ -59,22 +55,12 @@ defmodule Lisp.Reader do
     throw {:error, "Unexpected list delimiter while reading"}
   end
 
-  def read(["{" | _tokens] = all_tokens) do
-    {fst, snd} = Enum.split(all_tokens, matching_paren_index(all_tokens, {"{", "}"}))
-    [[:tuple | read(Enum.drop(fst, 1))] | read(Enum.drop(snd, 1))]
-  end
-
-  def read(["}" | _tokens]) do
-    throw {:error, "Unexpected tuple delimiter while reading"}
-  end
-
   def read([token | tokens]) do
     [atomise(token) | read(tokens)]
   end
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  @spec matching_paren_index([String.t], {String.t, String.t}) :: non_neg_integer | nil
   defp matching_paren_index(tokens, type \\ {"(", ")"}) do
     tokens
     |> Enum.with_index
@@ -82,7 +68,6 @@ defmodule Lisp.Reader do
     |> do_matching_paren_index([], type)
   end
 
-  @spec do_matching_paren_index([String.t], [String.t], {String.t, String.t}) :: non_neg_integer | nil
   defp do_matching_paren_index([], _stack, _type) do
     nil
   end
@@ -105,7 +90,6 @@ defmodule Lisp.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  @spec check_parens([String.t], [String.t]) :: boolean
   defp check_parens(tokens, stack \\ [])
 
   defp check_parens([], []) do
@@ -143,14 +127,6 @@ defmodule Lisp.Reader do
     |> Enum.map(&lispy_print/1)
     |> Enum.join(" ")
     |> (fn s -> "(#{s})" end).()
-  end
-
-  defp lispy_print(tuple) when is_tuple(tuple) do
-    tuple
-    |> Tuple.to_list
-    |> Enum.map(&lispy_print/1)
-    |> Enum.join(" ")
-    |> (fn s -> "{#{s}}" end).()
   end
 
   defp lispy_print(str) when is_binary(str) do
@@ -196,7 +172,6 @@ defmodule Lisp.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  # @spec read_input(pid, non_neg_integer, [String.t]) :: nil
   def read_input(env, num \\ 0, read_so_far \\ [], leading_text \\ nil) do
     leading_text = if is_nil(leading_text) do
       "klambda(#{num})> "
