@@ -5,6 +5,10 @@ defmodule Lisp.Reader.Eval do
   require IEx
   require Integer
 
+
+  # TODO: check eval args in function calls !
+  # TODO: raise error on arg type mismatch !
+
   def eval([:defun, func, params | body], env) do
     :ok = Env.define_function(env,
                               func,
@@ -91,6 +95,8 @@ defmodule Lisp.Reader.Eval do
     String.to_atom(name)
   end
 
+  ################################ STRINGS ################################
+
   def eval([:string?, arg], _env) do
     is_bitstring(arg)
   end
@@ -108,7 +114,6 @@ defmodule Lisp.Reader.Eval do
     if String.length(arg) == 0 do
       throw {:error, "Argument is empty string"}
     else
-      IEx.pry
       {_, tlstr} = String.split_at(arg, 1)
       tlstr
     end
@@ -127,6 +132,26 @@ defmodule Lisp.Reader.Eval do
       true -> to_string(evaled_arg)
     end
   end
+
+  def eval([:"string->n", arg], env) do
+    evaled_arg = eval(arg, env)
+    if String.length(evaled_arg) == 0 do
+      throw {:error, "Argument is empty string"}
+    else
+      List.first(String.to_charlist(evaled_arg))
+    end
+  end
+
+  def eval([:"n->string", arg], env) do
+    evaled_arg = eval(arg, env)
+    if String.valid? <<evaled_arg>> do
+     <<evaled_arg>>
+    else
+      throw {:error, "Not a valid codepoint"}
+    end
+  end
+
+  #########################################################################
 
   def eval([f | args], env) do
     fun = case f do
