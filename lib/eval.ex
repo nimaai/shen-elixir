@@ -145,10 +145,18 @@ defmodule Lisp.Reader.Eval do
   def eval([:"n->string", arg], env) do
     evaled_arg = eval(arg, env)
     if String.valid? <<evaled_arg>> do
-     <<evaled_arg>>
+       <<evaled_arg>>
     else
       throw {:error, "Not a valid codepoint"}
     end
+  end
+
+  ############################ ARRAYS #####################################
+
+  def eval([:absvector, arg], env) do
+    evaled_arg = eval(arg, env)
+    # TODO: raise error if size out of bounds
+    :array.new(evaled_arg)
   end
 
   #########################################################################
