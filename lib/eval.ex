@@ -2,6 +2,7 @@ defmodule Lisp.Reader.Eval do
   alias Lisp.Lambda
   alias Lisp.Cont
   alias Lisp.Env
+  alias Lisp.Vector
   require IEx
   require Integer
 
@@ -155,8 +156,20 @@ defmodule Lisp.Reader.Eval do
 
   def eval([:absvector, arg], env) do
     evaled_arg = eval(arg, env)
-    # TODO: raise error if size out of bounds
-    :array.new(evaled_arg)
+    Vector.new(evaled_arg)
+  end
+
+  def eval([:"address->", arg, pos, val], env) do
+    evaled_vec = eval(arg, env)
+    evaled_pos = eval(pos, env)
+    evaled_val = eval(val, env)
+    Vector.set(evaled_vec, evaled_pos, evaled_val)
+  end
+
+  def eval([:"<-address", arg, pos], env) do
+    evaled_vec = eval(arg, env)
+    evaled_pos = eval(pos, env)
+    Vector.get(evaled_vec, evaled_pos)
   end
 
   #########################################################################
@@ -169,6 +182,10 @@ defmodule Lisp.Reader.Eval do
 
     evaled_args = Enum.map(args, &eval(&1, env))
     eval_function_call(fun, evaled_args, env)
+  end
+
+  def eval(%Vector{} = vec, _env) do
+    vec
   end
 
   def eval(term, _env) when is_boolean(term) do
@@ -187,6 +204,8 @@ defmodule Lisp.Reader.Eval do
   def eval(term, _env) do
     term
   end
+
+  ################################## PRIVATE FUNCTIONS ##############################
 
   defp eval_function_call(%Lambda{} = f, args, env) do
     Lambda.call(f, args, env)

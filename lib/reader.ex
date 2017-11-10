@@ -8,6 +8,7 @@ defmodule Lisp.Reader do
   alias Lisp.Reader.Eval
   alias Lisp.Lambda
   alias Lisp.Cont
+  alias Lisp.Vector
 
   def tokenise(expr) do
     expr
@@ -139,6 +140,10 @@ defmodule Lisp.Reader do
 
   defp lispy_print(%Lambda{} = lambda) do
     Lambda.to_string(lambda)
+  end
+
+  defp lispy_print(%Vector{} = vector) do
+    Vector.to_string(vector)
   end
 
   defp lispy_print(nil) do
