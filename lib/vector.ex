@@ -1,25 +1,23 @@
 defmodule Lisp.Vector do
   require IEx
 
-  @enforce_keys [:array]
-  defstruct [:array]
-
   def new(size) do
     # TODO: raise error if size out of bounds
-    %Lisp.Vector{array: :array.new(size)}
+    {:ok, pid} = Agent.start_link( fn -> :array.new(size) end )
+    {:array, pid}
   end
 
-  def to_string(%Lisp.Vector{}) do
+  def to_string(_) do
     "<vector ...>"
   end
 
-  def set(%Lisp.Vector{array: arr}, pos, val) do
-    # NOTE: it's a destructive update!
-    arr = :array.set(pos, val2, arr)
-    %Lisp.Vector{array: arr}
+  def set({:array, pid}, pos, val) do
+    Agent.update( pid, fn arr -> :array.set(pos, val, arr) end )
+    Agent.get( pid, fn arr -> arr end )
+    {:array, pid}
   end
 
-  def get(%Lisp.Vector{array: arr}, pos) do
-    List.to_atom(:array.get(pos, arr))
+  def get({:array, pid}, pos) do
+    Agent.get( pid, fn arr -> :array.get(pos, arr) end )
   end
 end

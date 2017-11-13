@@ -142,8 +142,8 @@ defmodule Lisp.Reader do
     Lambda.to_string(lambda)
   end
 
-  defp lispy_print(%Vector{} = vector) do
-    Vector.to_string(vector)
+  defp lispy_print({:array, pid}) do
+    Vector.to_string(pid)
   end
 
   defp lispy_print(nil) do
