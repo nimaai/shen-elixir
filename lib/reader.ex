@@ -8,6 +8,7 @@ defmodule Lisp.Reader do
   alias Lisp.Reader.Eval
   alias Lisp.Lambda
   alias Lisp.Cont
+  alias Lisp.Cons
   alias Lisp.Vector
 
   def tokenise(expr) do
@@ -119,38 +120,46 @@ defmodule Lisp.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  defp lispy_print({:error, message}) do
+  def lispy_print({:error, message}) do
     "ERROR: #{message}"
   end
 
-  defp lispy_print(list) when is_list(list) do
+  def lispy_print(list) when is_list(list) do
     list
     |> Enum.map(&lispy_print/1)
     |> Enum.join(" ")
-    |> (fn s -> "(#{s})" end).()
+    |> (fn s -> "[#{s}]" end).()
   end
 
-  defp lispy_print(str) when is_binary(str) do
+  def lispy_print(str) when is_binary(str) do
     "\"" <> str <> "\""
   end
 
-  defp lispy_print(%Cont{} = cont) do
+  def lispy_print(%Cont{} = cont) do
     Cont.to_string(cont)
   end
 
-  defp lispy_print(%Lambda{} = lambda) do
+  def lispy_print(%Lambda{} = lambda) do
     Lambda.to_string(lambda)
   end
 
-  defp lispy_print({:array, pid}) do
+  def lispy_print(%Cons{} = cons) do
+    Cons.to_string(cons, "[", "]")
+  end
+
+  def lispy_print({:array, pid}) do
     Vector.to_string(pid)
   end
 
-  defp lispy_print(nil) do
+  def lispy_print(:end_of_cons) do
+    "[]"
+  end
+
+  def lispy_print(nil) do
     "nil"
   end
 
-  defp lispy_print(term) do
+  def lispy_print(term) do
     to_string term
   end
 
