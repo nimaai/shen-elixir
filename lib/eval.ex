@@ -1,9 +1,9 @@
-defmodule Lisp.Reader.Eval do
-  alias Lisp.Lambda
-  alias Lisp.Cont
-  alias Lisp.Cons
-  alias Lisp.Env
-  alias Lisp.Vector
+defmodule Klambda.Reader.Eval do
+  alias Klambda.Lambda
+  alias Klambda.Cont
+  alias Klambda.Cons
+  alias Klambda.Env
+  alias Klambda.Vector
   require IEx
   require Integer
 

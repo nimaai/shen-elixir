@@ -1,4 +1,4 @@
-defmodule Lisp.Vector do
+defmodule Klambda.Vector do
   require IEx
 
   def new(size) do

@@ -1,15 +1,15 @@
-defmodule Lisp.Reader do
+defmodule Klambda.Reader do
   require IEx
 
   @moduledoc """
-    Contains functions that read and evaluate Lisp code.
+    Contains functions that read and evaluate Klambda code.
   """
 
-  alias Lisp.Reader.Eval
-  alias Lisp.Lambda
-  alias Lisp.Cont
-  alias Lisp.Cons
-  alias Lisp.Vector
+  alias Klambda.Reader.Eval
+  alias Klambda.Lambda
+  alias Klambda.Cont
+  alias Klambda.Cons
+  alias Klambda.Vector
 
   def tokenise(expr) do
     expr

@@ -1,4 +1,4 @@
-defmodule Lisp.Types do
+defmodule Klambda.Types do
   @moduledoc """
     Types that are used by several different modules for specifications.
   """

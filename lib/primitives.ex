@@ -1,4 +1,4 @@
-defmodule Lisp.Primitives do
+defmodule Klambda.Primitives do
   def mapping do
     %{
       +: &+/2,

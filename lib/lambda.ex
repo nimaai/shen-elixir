@@ -1,10 +1,10 @@
-defmodule Lisp.Lambda do
-  alias Lisp.Reader.Eval
+defmodule Klambda.Lambda do
+  alias Klambda.Reader.Eval
   require IEx
 
   defstruct params: [], body: []
 
-  def call(%Lisp.Lambda{params: params, body: body}, evaled_args, env) do
+  def call(%Klambda.Lambda{params: params, body: body}, evaled_args, env) do
     new_locals = Map.merge(env[:locals],
                            params |> Enum.zip(evaled_args) |> Map.new)
 
@@ -19,7 +19,7 @@ defmodule Lisp.Lambda do
     throw {:error, "SyntaxError: undefined function call"}
   end
 
-  def to_string(%Lisp.Lambda{params: params} = lambda) do
+  def to_string(%Klambda.Lambda{}) do
     "<lambda ...>"
   end
 end

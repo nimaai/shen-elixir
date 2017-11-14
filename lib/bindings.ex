@@ -1,4 +1,4 @@
-defmodule Lisp.Bindings do
+defmodule Klambda.Bindings do
   @moduledoc """
 `   A GenServer that stores the values of all variables`
   """

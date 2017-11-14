@@ -1,7 +1,7 @@
-defmodule Lisp.Env do
-  alias Lisp.Bindings
-  alias Lisp.Lambda
-  alias Lisp.Primitives
+defmodule Klambda.Env do
+  alias Klambda.Bindings
+  alias Klambda.Lambda
+  alias Klambda.Primitives
   require IEx
 
   def init do
