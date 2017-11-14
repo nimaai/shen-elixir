@@ -212,6 +212,15 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
+  ############################ STREAMS ####################################
+
+  def eval([:"write-byte", num, stream], env) do
+    evaled_num = eval(num, env)
+    evaled_stream = eval(stream, env)
+    :ok = IO.binwrite( evaled_stream, to_string(<<evaled_num>>) )
+    evaled_num
+  end
+
   #########################################################################
 
   def eval([f | args], env) do
