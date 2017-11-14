@@ -172,6 +172,10 @@ defmodule Lisp.Reader.Eval do
     Vector.get(evaled_vec, evaled_pos)
   end
 
+  def eval([:"absvector?", arg], env) do
+    match?( {:array, _}, eval(arg, env) )
+  end
+
   #########################################################################
 
   def eval([f | args], env) do
