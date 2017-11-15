@@ -135,6 +135,10 @@ defmodule Klambda.Reader do
     "\"" <> str <> "\""
   end
 
+  def lispy_print(pid) when is_pid(pid) do
+    inspect(pid)
+  end
+
   def lispy_print(%Cont{} = cont) do
     Cont.to_string(cont)
   end

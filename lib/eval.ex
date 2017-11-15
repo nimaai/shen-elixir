@@ -215,10 +215,33 @@ defmodule Klambda.Reader.Eval do
   ############################ STREAMS ####################################
 
   def eval([:"write-byte", num, stream], env) do
+    # TODO: raise error if stream closed or on in out mode
     evaled_num = eval(num, env)
     evaled_stream = eval(stream, env)
     :ok = IO.binwrite( evaled_stream, to_string(<<evaled_num>>) )
     evaled_num
+  end
+
+  def eval([:"read-byte", stream], env) do
+    # TODO: raise error if stream closed or on in in mode
+    evaled_stream = eval(stream, env)
+    char = IO.binread( evaled_stream, 1 )
+    <<num, _>> = char <> <<0>>
+    case num do
+      :oef -> -1
+      _ -> num
+    end
+  end
+
+  def eval([:open, path, mode], env) do
+    evaled_path = eval(path, env)
+    evaled_mode = case eval(mode, env) do
+      :in -> :read
+      :out -> :write
+      _ -> {:"simple-error", "invalid mode"}
+    end
+    {:ok, pid} = File.open( evaled_path, [evaled_mode] )
+    pid
   end
 
   #########################################################################
