@@ -7,8 +7,10 @@ defmodule Klambda.Env do
   def init do
     {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
     {:ok, globals_pid}= Bindings.start_link(
-      %{ "*stinput*": :stdio,
-         "*stoutput*": :stdio }
+      %{"*stinput*": :stdio,
+        "*stoutput*": :stdio,
+        "*home-directory*": "" # really???
+      }
     )
 
     %{locals: %{},

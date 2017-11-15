@@ -244,6 +244,12 @@ defmodule Klambda.Reader.Eval do
     pid
   end
 
+  def eval([:close, stream], env) do
+    evaled_stream = eval(stream, env)
+    true = Process.exit( evaled_stream, :kill )
+    []
+  end
+
   #########################################################################
 
   def eval([f | args], env) do
