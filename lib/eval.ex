@@ -11,16 +11,16 @@ defmodule Klambda.Reader.Eval do
   # TODO: check eval args in function calls !
   # TODO: raise error on arg type mismatch !
 
+  ########################## FUNCTIONS AND BINDINGS #######################
+
   def eval([:defun, func, params | body], env) do
-    :ok = Env.define_function(env,
-                              func,
-                              %Lambda{params: params, body: body})
+    :ok = Env.define_function( env, func, Lambda.create(params, body) )
     func
   end
 
   def eval([:lambda, param | body], _env) do
     if is_atom(param) do
-      %Lambda{params: [param], body: body}
+      Lambda.create([param], body)
     else
       throw {:error, "Required argument is not a symbol"}
     end
@@ -28,7 +28,7 @@ defmodule Klambda.Reader.Eval do
 
   def eval([:let, sym, value_expr | body], env) do
     Lambda.call(
-      %Lambda{params: [sym], body: body},
+      Lambda.create([sym], body),
       [eval(value_expr, env)],
       env
     )
@@ -37,6 +37,13 @@ defmodule Klambda.Reader.Eval do
   def eval([:freeze, body], env) do
     %Cont{body: body, locals: env[:locals]}
   end
+
+  # NOTE: not needed for klambda
+  def eval([:function, func], env) do
+    Env.lookup_function(func, env)
+  end
+
+  #########################################################################
 
   def eval([:if, condition, consequent, alternative], env) do
     if eval(condition, env) == true do
@@ -310,6 +317,22 @@ defmodule Klambda.Reader.Eval do
 
   defp equal?(%Cons{head: head1, tail: tail1}, %Cons{head: head2, tail: tail2}) do
     equal?(head1, head2) && equal?(tail1, tail2)
+  end
+
+  defp equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do
+    arg1 == arg2
+  end
+
+  defp equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do
+    arg1 == arg2
+  end
+
+  defp equal?(%Lambda{id: id1}, %Lambda{id: id2}) do
+    id1 == id2
+  end
+
+  defp equal?(arg1, arg2) when is_pid(arg1) and is_pid(arg2) do
+    arg1 == arg2
   end
 
   defp equal?(_arg1, _arg2) do
