@@ -259,9 +259,13 @@ defmodule Klambda.Reader.Eval do
 
   ############################ GENERAL ####################################
 
-
   def eval([:"=", arg1, arg2], env) do
     equal?( eval(arg1, env), eval(arg2, env) )
+  end
+
+  def eval([:"eval-kl", [:cons | _] = arg], env) do
+    evaled_arg = eval(arg, env)
+    eval( Cons.to_list( evaled_arg ), env )
   end
 
   #########################################################################
