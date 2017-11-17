@@ -268,6 +268,18 @@ defmodule Klambda.Reader.Eval do
     eval( Cons.to_list( evaled_arg ), env )
   end
 
+  ####################### INFORMATIONAL ###################################
+
+  def eval([:"get-time", arg], env) do
+    evaled_arg = eval(arg, env)
+    now = DateTime.utc_now() |> DateTime.to_unix()
+    case evaled_arg do
+      :unix -> now
+      :run -> now - env[:start_time]
+      _ -> throw {:error, "invalid symbol for get-time"}
+    end
+  end
+
   #########################################################################
 
   def eval([f | args], env) do

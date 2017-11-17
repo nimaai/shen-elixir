@@ -15,7 +15,9 @@ defmodule Klambda.Env do
 
     %{locals: %{},
       globals: globals_pid,
-      functions: functions_pid}
+      functions: functions_pid,
+      start_time: DateTime.utc_now() |> DateTime.to_unix()
+    }
   end
 
   def lookup_global(%{globals: pid}, sym) do
