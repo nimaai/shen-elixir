@@ -14,7 +14,9 @@ defmodule Klambda.Reader.Eval do
   ########################## FUNCTIONS AND BINDINGS #######################
 
   def eval([:defun, func, params | body], env) do
-    :ok = Env.define_function( env, func, Lambda.create(params, body) )
+    :ok = Env.define_function(env,
+                              func,
+                              Lambda.create(params, body))
     func
   end
 
@@ -280,6 +282,10 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
+  def eval([:type, arg, _sym], env) do
+    eval(arg, env)
+  end
+
   #########################################################################
 
   def eval([f | args], env) do
@@ -354,4 +360,13 @@ defmodule Klambda.Reader.Eval do
   defp equal?(_arg1, _arg2) do
     false
   end
+
+  # defp curry([x | rest], body) do
+  #   Enum.reduce(
+  #     [[:lambda, x, body] | rest],
+  #     fn(param, lambda_acc) ->
+  #       [:lambda, param, lambda_acc]
+  #     end
+  #   )
+  # end
 end
