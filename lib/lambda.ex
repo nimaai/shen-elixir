@@ -20,6 +20,19 @@ defmodule Klambda.Lambda do
     throw {:error, "SyntaxError: undefined function call"}
   end
 
+  def reduce1([:lambda, target, body], target, val) do
+    reduce1(body, target, val)
+  end
+
+  def reduce1([:lambda, param, body], target, val) do
+    [:lambda, param, reduce1(body, target, val)]
+  end
+
+  def reduce1(body, target, val) do
+    i = Enum.find_index(body, &(&1 == target))
+    List.replace_at(body, i, val)
+  end
+
   def to_string(%Klambda.Lambda{id: id}) do
     "<lambda #{id}>"
   end

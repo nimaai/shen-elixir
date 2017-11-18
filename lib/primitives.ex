@@ -14,4 +14,10 @@ defmodule Klambda.Primitives do
       or: &or/2,
     }
   end
+
+  def arities do
+    %{
+      +: 2
+    }
+  end
 end
