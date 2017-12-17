@@ -15,16 +15,22 @@ defmodule Klambda.Reader.Eval do
   ############################# UNCURRIED #################################
   #########################################################################
 
-  def eval([:defun, func, params | body], env) do
+  def eval([:defun, fn_name, params | body], env) when is_atom(fn_name) do
+    [fst | rest] = Enum.reverse(params)
+    curried = Enum.reduce(
+      rest,
+      [:lambda, fst, body],
+      fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end
+    )
     :ok = Env.define_function(env,
-                              func,
-                              Lambda.create(params, body))
-    func
+                              fn_name,
+                              Lambda.create(fst, curried))
+    fn_name
   end
 
   def eval([:lambda, param, body], _env) do
     if is_atom(param) do
-      Lambda.create([param], body)
+      Lambda.create(param, body)
     else
       throw {:error, "Required argument is not a symbol"}
     end
@@ -32,7 +38,7 @@ defmodule Klambda.Reader.Eval do
 
   def eval([:let, sym, value_expr | body], env) do
     Lambda.call(
-      Lambda.create([sym], body),
+      Lambda.create(sym, body),
       [eval(value_expr, env)],
       env
     )
@@ -74,26 +80,49 @@ defmodule Klambda.Reader.Eval do
   ############################### CURRIED #################################
   #########################################################################
 
-  def eval([f | args] = form, env) do
-    [first | rest] = evaled_args = Enum.map(args, &eval(&1, env))
-
-    [:lambda, param, _] = lambda_form = cond do
-      is_atom(f) -> curry(f, Primitives.arities()[f])
-      [:lambda | _] = f -> f
-    end
-
-    reduced = Lambda.reduce1(lambda_form, param, first)
-
-    if match?([], rest) do
-      if match?([:lambda | _], reduced) do
-        eval(reduced, env)
-      else
-        eval_primitive(reduced)
-      end
-    else
-      eval([reduced | rest], env)
-    end
+  def eval([f], env) when is_atom(f) do
+    Env.lookup_function(env, f)
   end
+
+  def eval([f | args], env) when is_atom(f) do
+    new_expr = Enum.reduce(args,
+                           [f],
+                           fn(el, acc) -> [el, acc] end)
+    eval(new_expr, env)
+  end
+
+  def eval([[f], arg], env) when is_atom(f) do
+    eval(
+      [eval([f], env), eval(arg, env)],
+      env
+    )
+  end
+
+  def eval(%Lambda{} = f, arg, env) do
+    Lambda.call(f, arg, env)
+  end
+
+
+  # def eval([f | args] = form, env) do
+  #   [first | rest] = evaled_args = Enum.map(args, &eval(&1, env))
+
+  #   [:lambda, param, _] = lambda_form = cond do
+  #     is_atom(f) -> curry(f, Primitives.arities()[f])
+  #     [:lambda | _] = f -> f
+  #   end
+
+  #   reduced = Lambda.reduce1(lambda_form, param, first)
+
+  #   if match?([], rest) do
+  #     if match?([:lambda | _], reduced) do
+  #       eval(reduced, env)
+  #     else
+  #       eval_primitive(reduced)
+  #     end
+  #   else
+  #     eval([reduced | rest], env)
+  #   end
+  # end
 
   def eval_primitive([:+, x, y]) do
     x + y

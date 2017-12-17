@@ -3,16 +3,11 @@ defmodule Klambda.Lambda do
   require IEx
 
   @enforce_keys :id
-  defstruct id: nil, params: [], body: []
+  defstruct id: nil, param: nil, body: []
 
-  def call(%Klambda.Lambda{params: params, body: body}, evaled_args, env) do
-    new_locals = Map.merge(env[:locals],
-                           params |> Enum.zip(evaled_args) |> Map.new)
-
-    new_env = Map.update!(env,
-                          :locals,
-                          fn _ -> new_locals end)
-
+  def call(%Klambda.Lambda{param: param, body: body}, arg, env) do
+    new_locals = Map.merge(env[:locals], %{param => arg})
+    new_env = Map.update!(env, :locals, fn _ -> new_locals end)
     apply(&Eval.eval(&1, new_env), body)
   end
 
@@ -37,10 +32,10 @@ defmodule Klambda.Lambda do
     "<lambda #{id}>"
   end
 
-  def create(params, body) do
+  def create(param, body) when is_atom(param) do
     %Klambda.Lambda{
       id: Base.encode16( :crypto.strong_rand_bytes(6) ),
-      params: params,
+      param: param,
       body: body
       }
   end
