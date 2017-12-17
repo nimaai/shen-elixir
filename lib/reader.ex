@@ -139,6 +139,10 @@ defmodule Klambda.Reader do
     inspect(pid)
   end
 
+  def lispy_print(f) when is_function(f) do
+    "<Function>"
+  end
+
   def lispy_print(%Cont{} = cont) do
     Cont.to_string(cont)
   end

@@ -1,23 +1,27 @@
 defmodule Klambda.Primitives do
   def mapping do
     %{
-      +: &+/2,
-      -: &-/2,
-      *: &*/2,
-      /: &(&1 / &2),
-      number?: &is_number/1,
-      >: &>/2,
-      <: &</2,
-      >=: &>=/2,
-      <=: &<=/2,
-      and: &and/2,
-      or: &or/2,
-    }
-  end
+      +: fn(x) -> fn(y) -> x + y end end,
 
-  def arities do
-    %{
-      +: 2
+      -: fn(x) -> fn(y) -> x - y end end,
+
+      *: fn(x) -> fn(y) -> x * y end end,
+
+      /: fn(x) -> fn(y) -> x / y end end,
+
+      number?: &is_number/1,
+
+      >: fn(x) -> fn(y) -> x > y end end,
+
+      <: fn(x) -> fn(y) -> x < y end end,
+
+      >=: fn(x) -> fn(y) -> x >= y end end,
+
+      <=: fn(x) -> fn(y) -> x <= y end end,
+
+      and: fn(x) -> fn(y) -> x and y end end,
+
+      or: fn(x) -> fn(y) -> x or y end end
     }
   end
 end

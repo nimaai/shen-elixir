@@ -78,20 +78,33 @@ defmodule Klambda.Reader.Eval do
 
   def eval([[:lambda, var, body] = lambda, arg], env) do
     eval(
-      Lambda.beta_reduce(lambda, arg),
+      Lambda.beta_reduce(lambda, eval(arg, env)),
       env
     )
   end
 
   def eval([f], env) when is_atom(f) do
-    Env.lookup_function(env, f)
+    if Map.has_key?(Primitives.mapping(), f) do
+      Primitives.mapping()[f]
+    else
+      Env.lookup_function(env, f)
+    end
   end
 
   def eval([f, arg], env) do
-    eval(
-      [Env.lookup_function(env, f), eval(arg, env)],
-      env
-    )
+    evaled_f = eval(f, env)
+    evaled_arg = eval(arg, env)
+
+    cond do
+      is_function(evaled_f) -> evaled_f.(evaled_arg)
+      Map.has_key?(Primitives.mapping(), evaled_f) ->
+        func = Primitives.mapping()[evaled_f]
+        func.(evaled_arg)
+      true -> eval(
+        [Env.lookup_function(env, evaled_f), eval(evaled_arg, env)],
+        env
+      )
+    end
   end
 
   def eval([f, fst | rest], env) when is_atom(f) do
@@ -99,6 +112,10 @@ defmodule Klambda.Reader.Eval do
       [eval([f, fst], env) | rest],
       env
     )
+  end
+
+  def eval(f) when is_function(f) do
+    f.()
   end
 
   # def eval([f | args] = form, env) do
