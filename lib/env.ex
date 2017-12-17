@@ -40,7 +40,7 @@ defmodule Klambda.Env do
     end
   end
 
-  def define_function(%{functions: pid}, sym, lambda = %Lambda{}) do
+  def define_function(%{functions: pid}, sym, [:lambda | _] = lambda) do
     Bindings.define(pid, sym, lambda)
   end
 end

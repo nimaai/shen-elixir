@@ -8,24 +8,31 @@ defmodule Klambda.Lambda do
   def call(%Klambda.Lambda{param: param, body: body}, arg, env) do
     new_locals = Map.merge(env[:locals], %{param => arg})
     new_env = Map.update!(env, :locals, fn _ -> new_locals end)
-    apply(&Eval.eval(&1, new_env), body)
+    Eval.eval(body, new_env)
   end
 
   def call(nil, _args) do
     throw {:error, "SyntaxError: undefined function call"}
   end
 
-  def reduce1([:lambda, target, body], target, val) do
-    reduce1(body, target, val)
+  def beta_reduce([:lambda, param, body], val) do
+    subst(body, param, val)
   end
 
-  def reduce1([:lambda, param, body], target, val) do
-    [:lambda, param, reduce1(body, target, val)]
+  defp subst([fst | rest], param, val) do
+    [subst(fst, param, val) | subst(rest, param, val)]
   end
 
-  def reduce1(body, target, val) do
-    i = Enum.find_index(body, &(&1 == target))
-    List.replace_at(body, i, val)
+  defp subst(param, param, val) when is_atom(param) do
+    val
+  end
+
+  defp subst(param, _, _) do
+    param
+  end
+
+  defp subst([], _, _) do
+    []
   end
 
   def to_string(%Klambda.Lambda{id: id}) do

@@ -17,20 +17,16 @@ defmodule Klambda.Reader.Eval do
 
   def eval([:defun, fn_name, params | body], env) when is_atom(fn_name) do
     [fst | rest] = Enum.reverse(params)
-    curried = Enum.reduce(
-      rest,
-      [:lambda, fst, body],
-      fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end
-    )
-    :ok = Env.define_function(env,
-                              fn_name,
-                              Lambda.create(fst, curried))
+    curried = Enum.reduce(rest,
+                          [:lambda, fst | body],
+                          fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end)
+    :ok = Env.define_function(env, fn_name, curried)
     fn_name
   end
 
-  def eval([:lambda, param, body], _env) do
+  def eval([:lambda, param, body] = lambda, _env) do
     if is_atom(param) do
-      Lambda.create(param, body)
+      lambda
     else
       throw {:error, "Required argument is not a symbol"}
     end
@@ -80,28 +76,30 @@ defmodule Klambda.Reader.Eval do
   ############################### CURRIED #################################
   #########################################################################
 
-  def eval([f], env) when is_atom(f) do
-    Env.lookup_function(env, f)
-  end
-
-  def eval([f | args], env) when is_atom(f) do
-    new_expr = Enum.reduce(args,
-                           [f],
-                           fn(el, acc) -> [el, acc] end)
-    eval(new_expr, env)
-  end
-
-  def eval([[f], arg], env) when is_atom(f) do
+  def eval([[:lambda, var, body] = lambda, arg], env) do
     eval(
-      [eval([f], env), eval(arg, env)],
+      Lambda.beta_reduce(lambda, arg),
       env
     )
   end
 
-  def eval(%Lambda{} = f, arg, env) do
-    Lambda.call(f, arg, env)
+  def eval([f], env) when is_atom(f) do
+    Env.lookup_function(env, f)
   end
 
+  def eval([f, arg], env) do
+    eval(
+      [Env.lookup_function(env, f), eval(arg, env)],
+      env
+    )
+  end
+
+  def eval([f, fst | rest], env) when is_atom(f) do
+    eval(
+      [eval([f, fst], env) | rest],
+      env
+    )
+  end
 
   # def eval([f | args] = form, env) do
   #   [first | rest] = evaled_args = Enum.map(args, &eval(&1, env))
@@ -123,10 +121,6 @@ defmodule Klambda.Reader.Eval do
   #     eval([reduced | rest], env)
   #   end
   # end
-
-  def eval_primitive([:+, x, y]) do
-    x + y
-  end
 
   # defp eval_function_call(%Lambda{} = f, args, env) do
   #   Lambda.call(f, args, env)
