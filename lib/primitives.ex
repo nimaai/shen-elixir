@@ -1,4 +1,6 @@
 defmodule Klambda.Primitives do
+  alias Klambda.Env
+
   def mapping do
     %{
       +: fn(x) -> fn(y) -> x + y end end,
@@ -21,7 +23,16 @@ defmodule Klambda.Primitives do
 
       and: fn(x) -> fn(y) -> x and y end end,
 
-      or: fn(x) -> fn(y) -> x or y end end
+      or: fn(x) -> fn(y) -> x or y end end,
+
+      set: fn(sym) ->
+        fn(val) ->
+          fn(env) ->
+            :ok = Env.define_global(env, sym, val)
+            val
+          end
+        end
+      end
     }
   end
 end

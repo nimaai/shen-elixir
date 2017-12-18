@@ -84,10 +84,9 @@ defmodule Klambda.Reader.Eval do
   end
 
   def eval([f], env) when is_atom(f) do
-    if Map.has_key?(Primitives.mapping(), f) do
-      Primitives.mapping()[f]
-    else
-      Env.lookup_function(env, f)
+    cond do
+      Map.has_key?(Primitives.mapping(), f) -> Primitives.mapping()[f]
+      true -> Env.lookup_function(env, f)
     end
   end
 
@@ -95,6 +94,7 @@ defmodule Klambda.Reader.Eval do
     evaled_f = eval(f, env)
     evaled_arg = eval(arg, env)
 
+    # IEx.pry
     cond do
       is_function(evaled_f) -> evaled_f.(evaled_arg)
       Map.has_key?(Primitives.mapping(), evaled_f) ->
@@ -108,10 +108,15 @@ defmodule Klambda.Reader.Eval do
   end
 
   def eval([f, fst | rest], env) when is_atom(f) do
+    # IEx.pry
     eval(
       [eval([f, fst], env) | rest],
       env
     )
+  end
+
+  def eval(f, env) when is_function(f) do
+    f.(env)
   end
 
   def eval(f) when is_function(f) do
