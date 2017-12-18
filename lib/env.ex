@@ -5,19 +5,22 @@ defmodule Klambda.Env do
   require IEx
 
   def init do
-    {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
-    {:ok, globals_pid}= Bindings.start_link(
-      %{"*stinput*": :stdio,
-        "*stoutput*": :stdio,
-        "*home-directory*": "" # really???
-      }
-    )
+    func = fn ->
+      {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
+      {:ok, globals_pid}= Bindings.start_link(
+        %{"*stinput*": :stdio,
+          "*stoutput*": :stdio,
+          "*home-directory*": "" # really???
+        }
+      )
 
-    %{locals: %{},
-      globals: globals_pid,
-      functions: functions_pid,
-      start_time: DateTime.utc_now() |> DateTime.to_unix()
-    }
+      %{locals: %{},
+        globals: globals_pid,
+        functions: functions_pid,
+        start_time: DateTime.utc_now() |> DateTime.to_unix()
+      }
+    end
+    Agent.start_link(func, name: :env)
   end
 
   def lookup_global(%{globals: pid}, sym) do

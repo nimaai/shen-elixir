@@ -15,16 +15,16 @@ defmodule Klambda.Reader.Eval do
   ############################# UNCURRIED #################################
   #########################################################################
 
-  def eval([:defun, fn_name, params | body], env) when is_atom(fn_name) do
+  def eval([:defun, fn_name, params | body]) when is_atom(fn_name) do
     [fst | rest] = Enum.reverse(params)
     curried = Enum.reduce(rest,
                           [:lambda, fst | body],
                           fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end)
-    :ok = Env.define_function(env, fn_name, curried)
+    :ok = Env.define_function(fn_name, curried)
     fn_name
   end
 
-  def eval([:lambda, param, body] = lambda, _env) do
+  def eval([:lambda, param, body] = lambda) do
     if is_atom(param) do
       lambda
     else
@@ -32,43 +32,43 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
-  def eval([:let, sym, value_expr | body], env) do
+  def eval([:let, sym, value_expr | body]) do
     Lambda.call(
       Lambda.create(sym, body),
-      [eval(value_expr, env)],
-      env
+      [eval(value_expr)]
     )
   end
 
-  def eval([:freeze, body], env) do
-    %Cont{body: body, locals: env[:locals]}
+  def eval([:freeze, body]) do
+    locals = Agent.get(:env, fn state -> state[:locals] end)
+    %Cont{body: body, locals: locals}
   end
 
-  def eval([:if, condition, consequent, alternative], env) do
-    if eval(condition, env) == true do
-      eval(consequent, env)
+  def eval([:if, condition, consequent, alternative]) do
+    if eval(condition) == true do
+      eval(consequent)
     else
-      eval(alternative, env)
+      eval(alternative)
     end
   end
 
-  def eval([:cond, condition, consequent | rest], env) do
+  def eval([:cond, condition, consequent | rest]) do
     if [condition, consequent | rest] |> length |> Integer.is_odd do
       throw {:error, "Unbalanced cond clauses"}
     end
 
-    if eval(condition, env) == true do
-      eval(consequent, env)
+    if eval(condition) == true do
+      eval(consequent)
     else
-      eval([:cond | rest], env)
+      eval([:cond | rest])
     end
   end
 
-  def eval([:cond, _condition], _env) do
+  def eval([:cond, _condition]) do
     throw {:error, "Unbalanced cond clause"}
   end
 
-  def eval([:cond], _env) do
+  def eval([:cond]) do
     throw {:error, "No matching cond clause"}
   end
 
@@ -76,23 +76,20 @@ defmodule Klambda.Reader.Eval do
   ############################### CURRIED #################################
   #########################################################################
 
-  def eval([[:lambda, var, body] = lambda, arg], env) do
-    eval(
-      Lambda.beta_reduce(lambda, eval(arg, env)),
-      env
-    )
+  def eval([[:lambda, var, body] = lambda, arg]) do
+    eval Lambda.beta_reduce(lambda, eval(arg))
   end
 
-  def eval([f], env) when is_atom(f) do
+  def eval([f]) when is_atom(f) do
     cond do
       Map.has_key?(Primitives.mapping(), f) -> Primitives.mapping()[f]
-      true -> Env.lookup_function(env, f)
+      true -> Env.lookup_function(f)
     end
   end
 
-  def eval([f, arg], env) do
-    evaled_f = eval(f, env)
-    evaled_arg = eval(arg, env)
+  def eval([f, arg]) do
+    evaled_f = eval(f)
+    evaled_arg = eval(arg)
 
     # IEx.pry
     cond do
@@ -100,23 +97,13 @@ defmodule Klambda.Reader.Eval do
       Map.has_key?(Primitives.mapping(), evaled_f) ->
         func = Primitives.mapping()[evaled_f]
         func.(evaled_arg)
-      true -> eval(
-        [Env.lookup_function(env, evaled_f), eval(evaled_arg, env)],
-        env
-      )
+      true -> eval [Env.lookup_function(evaled_f), eval(evaled_arg)]
     end
   end
 
-  def eval([f, fst | rest], env) when is_atom(f) do
+  def eval([f, fst | rest]) when is_atom(f) do
     # IEx.pry
-    eval(
-      [eval([f, fst], env) | rest],
-      env
-    )
-  end
-
-  def eval(f, env) when is_function(f) do
-    f.(env)
+    eval [eval([f, fst]) | rest]
   end
 
   def eval(f) when is_function(f) do
@@ -375,12 +362,13 @@ defmodule Klambda.Reader.Eval do
   # #   eval_function_call(fun, evaled_args, env)
   # # end
 
-  def eval(term, _env) when is_boolean(term) do
+  def eval(term) when is_boolean(term) do
     term
   end
 
-  def eval(term, env) when is_atom(term) do
-    val = env[:locals][term]
+  def eval(term) when is_atom(term) do
+    locals = Agent.get(:env, fn state -> state[:locals] end)
+    val = locals[term]
     if is_nil(val) do
       term
     else
@@ -388,7 +376,7 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
-  def eval(term, _env) do
+  def eval(term) do
     term
   end
 
