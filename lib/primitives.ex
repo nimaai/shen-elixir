@@ -27,10 +27,8 @@ defmodule Klambda.Primitives do
 
       set: fn(sym) ->
         fn(val) ->
-          fn(env) ->
-            :ok = Env.define_global(env, sym, val)
-            val
-          end
+          :ok = Env.define_global(sym, val)
+          val
         end
       end
     }

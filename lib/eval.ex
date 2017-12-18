@@ -87,11 +87,14 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
-  def eval([f, arg]) do
+  def eval(f) when is_function(f) do
+    f.()
+  end
+
+  def eval([[_ | _] = f, arg]) do
     evaled_f = eval(f)
     evaled_arg = eval(arg)
 
-    # IEx.pry
     cond do
       is_function(evaled_f) -> evaled_f.(evaled_arg)
       Map.has_key?(Primitives.mapping(), evaled_f) ->
@@ -101,43 +104,12 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
-  def eval([f, fst | rest]) when is_atom(f) do
-    # IEx.pry
-    eval [eval([f, fst]) | rest]
+  def eval([f | args]) when is_atom(f) do
+    # eval [[[f], arg1], arg2] ...
+    eval(
+      Enum.reduce(args, [f], fn(acc, el) -> [el, acc] end)
+    )
   end
-
-  def eval(f) when is_function(f) do
-    f.()
-  end
-
-  # def eval([f | args] = form, env) do
-  #   [first | rest] = evaled_args = Enum.map(args, &eval(&1, env))
-
-  #   [:lambda, param, _] = lambda_form = cond do
-  #     is_atom(f) -> curry(f, Primitives.arities()[f])
-  #     [:lambda | _] = f -> f
-  #   end
-
-  #   reduced = Lambda.reduce1(lambda_form, param, first)
-
-  #   if match?([], rest) do
-  #     if match?([:lambda | _], reduced) do
-  #       eval(reduced, env)
-  #     else
-  #       eval_primitive(reduced)
-  #     end
-  #   else
-  #     eval([reduced | rest], env)
-  #   end
-  # end
-
-  # defp eval_function_call(%Lambda{} = f, args, env) do
-  #   Lambda.call(f, args, env)
-  # end
-
-  # defp eval_function_call(f, args, _env) when is_function(f) do
-  #   apply(f, args)
-  # end
 
   # def eval([:"trap-error", body, handler], env) do
   #   result = eval(body, env)
