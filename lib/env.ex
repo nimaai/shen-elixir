@@ -23,15 +23,23 @@ defmodule Klambda.Env do
     Agent.start_link(func, name: :env)
   end
 
-  def lookup_global(%{globals: pid}, sym) do
-    Bindings.lookup(pid, sym)
+  def lookup_global(sym) do
+    Bindings.lookup(
+      Agent.get(:env, fn state -> state[:globals] end),
+      sym
+    )
   end
 
-  def define_global(%{globals: pid}, sym, val) do
-    Bindings.define(pid, sym, val)
+  def define_global(sym, val) do
+    Bindings.define(
+      Agent.get(:env, fn state -> state[:globals] end),
+      sym,
+      val
+    )
   end
 
-  def lookup_function(%{functions: pid, locals: locals}, sym) do
+  def lookup_function(sym) do
+    %{functions: pid, locals: locals} = Agent.get(:env, fn state -> state end)
     gf = Bindings.lookup(pid, sym)
     if is_nil(gf) do
       lf = locals[sym]
@@ -43,7 +51,11 @@ defmodule Klambda.Env do
     end
   end
 
-  def define_function(%{functions: pid}, sym, [:lambda | _] = lambda) do
-    Bindings.define(pid, sym, lambda)
+  def define_function(sym, [:lambda | _] = lambda) do
+    Bindings.define(
+      Agent.get(:env, fn state -> state[:functions] end),
+      sym,
+      lambda
+    )
   end
 end
