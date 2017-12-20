@@ -24,19 +24,8 @@ defmodule Klambda.Reader.Eval do
     fn_name
   end
 
-  def eval([:lambda, param, body] = lambda) do
-    if is_atom(param) do
-      lambda
-    else
-      throw {:error, "Required argument is not a symbol"}
-    end
-  end
-
-  def eval([:let, sym, value_expr | body]) do
-    Lambda.call(
-      Lambda.create(sym, body),
-      [eval(value_expr)]
-    )
+  def eval([:let, sym, val, body]) do
+    eval [[:lambda, sym, body], eval(val)]
   end
 
   def eval([:freeze, body]) do
@@ -76,8 +65,12 @@ defmodule Klambda.Reader.Eval do
   ############################### CURRIED #################################
   #########################################################################
 
-  def eval([[:lambda, var, body] = lambda, arg]) do
-    eval Lambda.beta_reduce(lambda, eval(arg))
+  def eval([:lambda, param, body] = lambda) do
+    if is_atom(param) do
+      lambda
+    else
+      throw {:error, "Required argument is not a symbol"}
+    end
   end
 
   def eval([f]) when is_atom(f) do
@@ -91,12 +84,17 @@ defmodule Klambda.Reader.Eval do
     f.()
   end
 
+  def eval([[:lambda, var, body] = lambda, arg]) do
+    eval Lambda.beta_reduce(lambda, eval(arg))
+  end
+
   def eval([[_ | _] = f, arg]) do
     evaled_f = eval(f)
     evaled_arg = eval(arg)
 
     cond do
       is_function(evaled_f) -> evaled_f.(evaled_arg)
+      [:lambda | _] = evaled_f -> eval [evaled_f, evaled_arg]
       Map.has_key?(Primitives.mapping(), evaled_f) ->
         func = Primitives.mapping()[evaled_f]
         func.(evaled_arg)
@@ -104,10 +102,12 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
-  def eval([f | args]) when is_atom(f) do
-    # eval [[[f], arg1], arg2] ...
+  def eval([f | args]) do
+    # eval [[[f], arg1], arg2] ... or
+    # eval [[[lambda x [lambda y ...]], arg1] arg2]
+    f_expr = if match?([:lambda | _], f), do: f, else: [f]
     eval(
-      Enum.reduce(args, [f], fn(acc, el) -> [el, acc] end)
+      Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
     )
   end
 
@@ -390,12 +390,12 @@ defmodule Klambda.Reader.Eval do
   #   false
   # end
 
-  def curry(f, arity) do
-    params = [first | rest] = Enum.map(arity..1, fn(count) -> :"x#{count}" end)
-    Enum.reduce(
-      rest,
-      [:lambda, first, [f | Enum.reverse(params)]],
-      fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end
-    )
-  end
+  # def curry(f, arity) do
+  #   params = [first | rest] = Enum.map(arity..1, fn(count) -> :"x#{count}" end)
+  #   Enum.reduce(
+  #     rest,
+  #     [:lambda, first, [f | Enum.reverse(params)]],
+  #     fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end
+  #   )
+  # end
 end
