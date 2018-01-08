@@ -61,6 +61,14 @@ defmodule Klambda.Reader.Eval do
     throw {:error, "No matching cond clause"}
   end
 
+  def eval([:and, arg1, arg2]) do
+    eval(arg1) and eval(arg2)
+  end
+
+  def eval([:or, arg1, arg2]) do
+    eval(arg1) or eval(arg2)
+  end
+
   #########################################################################
   ############################### CURRIED #################################
   #########################################################################
@@ -110,29 +118,6 @@ defmodule Klambda.Reader.Eval do
       Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
     )
   end
-
-  # def eval([:"trap-error", body, handler], env) do
-  #   result = eval(body, env)
-  #   case result do
-  #     exception = {:"simple-error", _message} ->
-  #       eval([handler, exception], env)
-  #     true -> result
-  #   end
-  # end
-
-  # def eval([:"simple-error", message], _env) do
-  #   throw {:"simple-error", message}
-  # end
-
-  # def eval([:"error-to-string", [:"simple-error", message]], _env) do
-  #   message
-  # end
-
-  # def eval([:set, sym, value], env) do
-  #   evaled_value = eval(value, env)
-  #   :ok = Env.define_global(env, sym, evaled_value)
-  #   evaled_value
-  # end
 
   # def eval([:value, global_var], env) do
   #   Env.lookup_global(env, global_var)

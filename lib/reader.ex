@@ -120,6 +120,10 @@ defmodule Klambda.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+  def lispy_print({:"simple-error", message}) do
+    message
+  end
+
   def lispy_print({:error, message}) do
     "ERROR: #{message}"
   end
