@@ -1,8 +1,7 @@
-defmodule Klambda.Cont do
+defmodule Klambda.Continuation do
   defstruct body: [], locals: %{}
 
-  def to_string(%Klambda.Cont{}) do
-    # "<Cont | Body: #{lispy_print(body)}> | Locals: #{Enum.map(locals, &lispy_print/1)}>"
+  def to_string(%Klambda.Continuation{}) do
     "<cont ...>"
   end
 end

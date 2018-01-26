@@ -7,7 +7,7 @@ defmodule Klambda.Reader do
 
   alias Klambda.Reader.Eval
   alias Klambda.Lambda
-  alias Klambda.Cont
+  alias Klambda.Continuation
   alias Klambda.Cons
   alias Klambda.Vector
 
@@ -147,8 +147,8 @@ defmodule Klambda.Reader do
     "<Function>"
   end
 
-  def lispy_print(%Cont{} = cont) do
-    Cont.to_string(cont)
+  def lispy_print(%Continuation{} = cont) do
+    Continuation.to_string(cont)
   end
 
   def lispy_print(%Lambda{} = lambda) do

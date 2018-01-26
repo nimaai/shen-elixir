@@ -1,6 +1,6 @@
 defmodule Klambda.Reader.Eval do
   alias Klambda.Lambda
-  alias Klambda.Cont
+  alias Klambda.Continuation
   alias Klambda.Cons
   alias Klambda.Env
   alias Klambda.Vector
@@ -30,7 +30,7 @@ defmodule Klambda.Reader.Eval do
 
   def eval([:freeze, body]) do
     locals = Agent.get(:env, fn state -> state[:locals] end)
-    %Cont{body: body, locals: locals}
+    %Continuation{body: body, locals: locals}
   end
 
   def eval([:if, condition, consequent, alternative]) do
@@ -118,14 +118,6 @@ defmodule Klambda.Reader.Eval do
       Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
     )
   end
-
-  # def eval([:value, global_var], env) do
-  #   Env.lookup_global(env, global_var)
-  # end
-
-  # def eval([:intern, name], _env) do
-  #   String.to_atom(name)
-  # end
 
   # ################################ STRINGS ################################
 
