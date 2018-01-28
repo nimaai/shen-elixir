@@ -11,10 +11,6 @@ defmodule Klambda.Reader.Eval do
   # TODO: check eval args in function calls !
   # TODO: raise error on arg type mismatch !
 
-  #########################################################################
-  ############################# UNCURRIED #################################
-  #########################################################################
-
   ##################### FUNCTIONS AND BINDINGS ###################
 
   def eval([:defun, fn_name, params | body]) when is_atom(fn_name) do
@@ -80,9 +76,7 @@ defmodule Klambda.Reader.Eval do
     eval(arg1) or eval(arg2)
   end
 
-  #########################################################################
-  ############################### CURRIED #################################
-  #########################################################################
+  ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
   def eval([f]) when is_atom(f) do
     cond do
@@ -121,62 +115,6 @@ defmodule Klambda.Reader.Eval do
       Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
     )
   end
-
-  # ################################ STRINGS ################################
-
-  # def eval([:string?, arg], _env) do
-  #   is_bitstring(arg)
-  # end
-
-  # def eval([:pos, arg, n], _env) do
-  #   unit = String.at(arg, n)
-  #   if is_nil(unit) do
-  #     throw {:error, "String index is out bounds"}
-  #   else
-  #     unit
-  #   end
-  # end
-
-  # def eval([:tlstr, arg], _env) do
-  #   if String.length(arg) == 0 do
-  #     throw {:error, "Argument is empty string"}
-  #   else
-  #     {_, tlstr} = String.split_at(arg, 1)
-  #     tlstr
-  #   end
-  # end
-
-  # def eval([:cn, s1, s2], _env) do
-  #   s1 <> s2
-  # end
-
-  # def eval([:str, arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   cond do
-  #     is_bitstring(evaled_arg) -> "\"" <> evaled_arg <> "\""
-  #     %Lambda{} = evaled_arg -> Lambda.to_string(evaled_arg)
-  #     %Cont{} = evaled_arg -> Cont.to_string(evaled_arg)
-  #     true -> to_string(evaled_arg)
-  #   end
-  # end
-
-  # def eval([:"string->n", arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   if String.length(evaled_arg) == 0 do
-  #     throw {:error, "Argument is empty string"}
-  #   else
-  #     List.first(String.to_charlist(evaled_arg))
-  #   end
-  # end
-
-  # def eval([:"n->string", arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   if String.valid? <<evaled_arg>> do
-  #      <<evaled_arg>>
-  #   else
-  #     throw {:error, "Not a valid codepoint"}
-  #   end
-  # end
 
   # ############################ ARRAYS #####################################
 

@@ -92,7 +92,24 @@ defmodule Klambda.Primitives do
           match?([_ | _], arg) -> "<continuation>"
           true -> to_string(arg)
         end
+      end,
+
+      "string->n": fn(arg) ->
+        if String.length(arg) == 0 do
+          throw {:error, "Argument is empty string"}
+        else
+          List.first(String.to_charlist(arg))
+        end
+      end,
+
+      "n->string": fn(arg) ->
+        if String.valid? <<arg>> do
+           <<arg>>
+        else
+          throw {:error, "Not a valid codepoint"}
+        end
       end
+
 
     }
   end
