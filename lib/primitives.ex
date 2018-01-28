@@ -3,6 +3,7 @@ defmodule Klambda.Primitives do
   alias Klambda.Reader.Eval
   alias Klambda.Vector
   alias Klambda.Cons
+  alias Klambda.Equality
   require IEx
 
   def mapping do
@@ -191,6 +192,16 @@ defmodule Klambda.Primitives do
       close: fn(stream) ->
         true = Process.exit( stream, :kill )
         []
+      end,
+
+      ############################ GENERAL ####################################
+
+      "=": fn(arg1) -> fn(arg2) ->
+        Equality.equal?(arg1, arg2)
+      end end,
+
+      "eval-kl": fn(kl_expr) ->
+        Eval.eval kl_expr
       end
 
     }
