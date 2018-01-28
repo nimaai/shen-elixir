@@ -158,6 +158,39 @@ defmodule Klambda.Primitives do
           %Cons{tail: tail} -> tail
           _ -> throw {:error, "Argument is not a cons"}
         end
+      end,
+
+      ############################ STREAMS ####################################
+
+      "write-byte": fn(num) -> fn(stream) ->
+        # TODO: raise error if stream closed or on in out mode
+        :ok = IO.binwrite( stream, to_string(<<num>>) )
+        num
+      end end,
+
+      "read-byte": fn(stream) ->
+        # TODO: raise error if stream closed or on in in mode
+        char = IO.binread( stream, 1 )
+        <<num, _>> = char <> <<0>>
+        case num do
+          :oef -> -1
+          _ -> num
+        end
+      end,
+
+      open: fn(path) -> fn(mode) ->
+        m = case mode do
+          :in -> :read
+          :out -> :write
+          _ -> {:"simple-error", "invalid mode"}
+        end
+        {:ok, pid} = File.open( path, [m] )
+        pid
+      end end,
+
+      close: fn(stream) ->
+        true = Process.exit( stream, :kill )
+        []
       end
 
     }
