@@ -116,30 +116,6 @@ defmodule Klambda.Reader.Eval do
     )
   end
 
-  # ############################ ARRAYS #####################################
-
-  # def eval([:absvector, arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   Vector.new(evaled_arg)
-  # end
-
-  # def eval([:"address->", arg, pos, val], env) do
-  #   evaled_vec = eval(arg, env)
-  #   evaled_pos = eval(pos, env)
-  #   evaled_val = eval(val, env)
-  #   Vector.set(evaled_vec, evaled_pos, evaled_val)
-  # end
-
-  # def eval([:"<-address", arg, pos], env) do
-  #   evaled_vec = eval(arg, env)
-  #   evaled_pos = eval(pos, env)
-  #   Vector.get(evaled_vec, evaled_pos)
-  # end
-
-  # def eval([:"absvector?", arg], env) do
-  #   match?( {:array, _}, eval(arg, env) )
-  # end
-
   # ############################ CONSES #####################################
 
   # def eval([:"cons?", arg], env) do

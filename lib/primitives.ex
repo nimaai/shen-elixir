@@ -1,7 +1,7 @@
 defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Reader.Eval
-  alias Klambda.Continuation
+  alias Klambda.Vector
   require IEx
 
   def mapping do
@@ -108,8 +108,25 @@ defmodule Klambda.Primitives do
         else
           throw {:error, "Not a valid codepoint"}
         end
-      end
+      end,
 
+      ############################ ARRAYS #####################################
+
+      absvector: fn(arg) ->
+        Vector.new(arg)
+      end,
+
+      "address->": fn(vec) -> fn(pos) -> fn(val) ->
+        Vector.set(vec, pos, val)
+      end end end,
+
+      "<-address": fn(vec) -> fn(pos) ->
+        Vector.get(vec, pos)
+      end end,
+
+      "absvector?": fn(arg) ->
+        match?({:array, _}, arg)
+      end
 
     }
   end

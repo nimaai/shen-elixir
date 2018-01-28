@@ -8,7 +8,7 @@ defmodule Klambda.Vector do
   end
 
   def to_string(_) do
-    "<vector ...>"
+    "<vector>"
   end
 
   def set({:array, pid}, pos, val) do
