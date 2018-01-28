@@ -116,41 +116,6 @@ defmodule Klambda.Reader.Eval do
     )
   end
 
-  # ############################ CONSES #####################################
-
-  # def eval([:"cons?", arg], env) do
-  #   match?( %Cons{}, eval(arg, env) )
-  # end
-
-  # def eval([:cons, head, tail], env) do
-  #   evaled_head = eval(head, env)
-  #   evaled_tail = eval(tail, env)
-  #   %Cons{
-  #     head: evaled_head,
-  #     tail: if match?( [], evaled_tail ) do
-  #       :end_of_cons
-  #     else
-  #       evaled_tail
-  #     end
-  #   }
-  # end
-
-  # def eval([:hd, arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   case evaled_arg do
-  #     %Cons{head: head} -> head
-  #     _ -> throw {:error, "Argument is not a cons"}
-  #   end
-  # end
-
-  # def eval([:tl, arg], env) do
-  #   evaled_arg = eval(arg, env)
-  #   case evaled_arg do
-  #     %Cons{tail: tail} -> tail
-  #     _ -> throw {:error, "Argument is not a cons"}
-  #   end
-  # end
-
   # ############################ STREAMS ####################################
 
   # def eval([:"write-byte", num, stream], env) do

@@ -2,6 +2,7 @@ defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Reader.Eval
   alias Klambda.Vector
+  alias Klambda.Cons
   require IEx
 
   def mapping do
@@ -126,6 +127,37 @@ defmodule Klambda.Primitives do
 
       "absvector?": fn(arg) ->
         match?({:array, _}, arg)
+      end,
+
+      ############################ CONSES #####################################
+
+      "cons?": fn(arg) ->
+        match?( %Cons{}, arg )
+      end,
+
+      cons: fn(head) -> fn(tail) ->
+        %Cons{
+          head: head,
+          tail: if match?( [], tail ) do
+            :end_of_cons
+          else
+            tail
+          end
+        }
+      end end,
+
+      hd: fn(arg) ->
+        case arg do
+          %Cons{head: head} -> head
+          _ -> throw {:error, "Argument is not a cons"}
+        end
+      end,
+
+      tl: fn(arg) ->
+        case arg do
+          %Cons{tail: tail} -> tail
+          _ -> throw {:error, "Argument is not a cons"}
+        end
       end
 
     }
