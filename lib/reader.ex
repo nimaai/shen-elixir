@@ -6,8 +6,6 @@ defmodule Klambda.Reader do
   """
 
   alias Klambda.Reader.Eval
-  alias Klambda.Lambda
-  alias Klambda.Continuation
   alias Klambda.Cons
   alias Klambda.Vector
 
@@ -128,12 +126,12 @@ defmodule Klambda.Reader do
     "ERROR: #{message}"
   end
 
-  def lispy_print(list) when is_list(list) do
-    list
-    |> Enum.map(&lispy_print/1)
-    |> Enum.join(" ")
-    |> (fn s -> "[#{s}]" end).()
-  end
+  # def lispy_print(list) when is_list(list) do
+  #   list
+  #   |> Enum.map(&lispy_print/1)
+  #   |> Enum.join(" ")
+  #   |> (fn s -> "[#{s}]" end).()
+  # end
 
   def lispy_print(str) when is_binary(str) do
     "\"" <> str <> "\""
@@ -144,15 +142,15 @@ defmodule Klambda.Reader do
   end
 
   def lispy_print(f) when is_function(f) do
-    "<Function>"
+    "<native function>"
   end
 
-  def lispy_print(%Continuation{} = cont) do
-    Continuation.to_string(cont)
+  def lispy_print([:lambda | _] = lambda) do
+    "<lambda>"
   end
 
-  def lispy_print(%Lambda{} = lambda) do
-    Lambda.to_string(lambda)
+  def lispy_print([_ | _] = expr) do
+    "<continuation>"
   end
 
   def lispy_print(%Cons{} = cons) do

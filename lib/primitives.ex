@@ -2,26 +2,11 @@ defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Reader.Eval
   alias Klambda.Continuation
+  require IEx
 
   def mapping do
     %{
-      +: fn(x) -> fn(y) -> x + y end end,
-
-      -: fn(x) -> fn(y) -> x - y end end,
-
-      *: fn(x) -> fn(y) -> x * y end end,
-
-      /: fn(x) -> fn(y) -> x / y end end,
-
-      number?: &is_number/1,
-
-      >: fn(x) -> fn(y) -> x > y end end,
-
-      <: fn(x) -> fn(y) -> x < y end end,
-
-      >=: fn(x) -> fn(y) -> x >= y end end,
-
-      <=: fn(x) -> fn(y) -> x <= y end end,
+      ##################### CONDITIONALS #############################
 
       and: fn(x) -> fn(y) -> x and y end end,
 
@@ -30,6 +15,8 @@ defmodule Klambda.Primitives do
       if: fn(condition) -> fn(consequent) -> fn(alternative) ->
         if condition, do: consequent, else: alternative
       end end end,
+
+      ##################### ERROR HANDLING ###########################
 
       "trap-error": fn(body) -> fn(handler) ->
         try do
@@ -43,6 +30,8 @@ defmodule Klambda.Primitives do
 
       "error-to-string": fn({:"simple-error", message}) -> message end,
 
+      ######################### SYMBOLS ##############################
+
       intern: fn(name) -> String.to_atom(name) end,
 
       set: fn(sym) -> fn(val) ->
@@ -51,6 +40,28 @@ defmodule Klambda.Primitives do
       end end,
 
       value: fn(sym) -> Env.lookup_global(sym) end,
+
+      ######################### NUMERICS #############################
+
+      number?: &is_number/1,
+
+      +: fn(x) -> fn(y) -> x + y end end,
+
+      -: fn(x) -> fn(y) -> x - y end end,
+
+      *: fn(x) -> fn(y) -> x * y end end,
+
+      /: fn(x) -> fn(y) -> x / y end end,
+
+      >: fn(x) -> fn(y) -> x > y end end,
+
+      <: fn(x) -> fn(y) -> x < y end end,
+
+      >=: fn(x) -> fn(y) -> x >= y end end,
+
+      <=: fn(x) -> fn(y) -> x <= y end end,
+
+      ######################### STRINGS ##############################
 
       "string?": fn(arg) -> is_bitstring(arg) end,
 
@@ -77,9 +88,9 @@ defmodule Klambda.Primitives do
       str: fn(arg) ->
         cond do
           is_bitstring(arg) -> "\"" <> arg <> "\""
-          [:lambda | _] = arg -> "\"" <> arg <> "\""
-          %Continuation{} = arg -> "\"" <> Continuation.to_string(arg) <> "\""
-          true -> "\"" <> to_string(arg) <> "\""
+          match?([:lambda | _], arg) -> "<lambda>"
+          match?([_ | _], arg) -> "<continuation>"
+          true -> to_string(arg)
         end
       end
 

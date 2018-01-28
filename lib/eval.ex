@@ -15,6 +15,8 @@ defmodule Klambda.Reader.Eval do
   ############################# UNCURRIED #################################
   #########################################################################
 
+  ##################### FUNCTIONS AND BINDINGS ###################
+
   def eval([:defun, fn_name, params | body]) when is_atom(fn_name) do
     [fst | rest] = Enum.reverse(params)
     curried = Enum.reduce(rest,
@@ -24,14 +26,23 @@ defmodule Klambda.Reader.Eval do
     fn_name
   end
 
+  def eval([:lambda, param, body] = lambda) do
+    if is_atom(param) do
+      lambda
+    else
+      throw {:error, "Required argument is not a symbol"}
+    end
+  end
+
   def eval([:let, sym, val, body]) do
     eval [[:lambda, sym, body], eval(val)]
   end
 
-  def eval([:freeze, body]) do
-    locals = Agent.get(:env, fn state -> state[:locals] end)
-    %Continuation{body: body, locals: locals}
+  def eval([:freeze, expr]) do
+    expr
   end
+
+  ##################### CONDITIONALS #############################
 
   def eval([:if, condition, consequent, alternative]) do
     if eval(condition) == true do
@@ -72,14 +83,6 @@ defmodule Klambda.Reader.Eval do
   #########################################################################
   ############################### CURRIED #################################
   #########################################################################
-
-  def eval([:lambda, param, body] = lambda) do
-    if is_atom(param) do
-      lambda
-    else
-      throw {:error, "Required argument is not a symbol"}
-    end
-  end
 
   def eval([f]) when is_atom(f) do
     cond do
