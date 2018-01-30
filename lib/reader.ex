@@ -145,8 +145,8 @@ defmodule Klambda.Reader do
     "<native function>"
   end
 
-  def lispy_print([:lambda | _] = lambda) do
-    "<lambda>"
+  def lispy_print([:lambda, id | _] = lambda) do
+    "<lambda #{id}>"
   end
 
   def lispy_print([_ | _] = expr) do

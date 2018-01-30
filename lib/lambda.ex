@@ -1,5 +1,12 @@
 defmodule Klambda.Lambda do
-  def beta_reduce([:lambda, param, body], val) do
+  def create(param, body) do
+    [:lambda,
+     Base.encode16(:crypto.strong_rand_bytes(6)),
+     param,
+     body]
+  end
+
+  def beta_reduce([:lambda, _, param, body], val) do
     subst(body, param, val)
   end
 

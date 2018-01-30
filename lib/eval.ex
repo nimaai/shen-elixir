@@ -16,22 +16,22 @@ defmodule Klambda.Reader.Eval do
   def eval([:defun, fn_name, params | body]) when is_atom(fn_name) do
     [fst | rest] = Enum.reverse(params)
     curried = Enum.reduce(rest,
-                          [:lambda, fst | body],
-                          fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end)
-    :ok = Env.define_function(fn_name, curried)
+                          Lambda.create(fst, body),
+                          fn(param, lambda_acc) -> Lambda.create(param, lambda_acc) end)
+    :ok = Env.define_function(fn_name, curried |> IO.inspect)
     fn_name
   end
 
-  def eval([:lambda, param, body] = lambda) do
+  def eval([:lambda, param, body]) do
     if is_atom(param) do
-      lambda
+      Lambda.create(param, body)
     else
       throw {:error, "Required argument is not a symbol"}
     end
   end
 
   def eval([:let, sym, val, body]) do
-    eval [[:lambda, sym, body], eval(val)]
+    eval [Lambda.create(sym, body), eval(val)]
   end
 
   def eval([:freeze, expr]) do
@@ -85,11 +85,15 @@ defmodule Klambda.Reader.Eval do
     end
   end
 
+  def eval([_]) do
+    throw {:error, "Illegal function call"}
+  end
+
   def eval(f) when is_function(f) do
     f.()
   end
 
-  def eval([[:lambda, var, body] = lambda, arg]) do
+  def eval([[:lambda, _, var, body] = lambda, arg]) do
     eval Lambda.beta_reduce(lambda, eval(arg))
   end
 
@@ -172,16 +176,4 @@ defmodule Klambda.Reader.Eval do
   def eval(term) do
     term
   end
-
-  # ################################## PRIVATE FUNCTIONS ##############################
-
-
-  # def curry(f, arity) do
-  #   params = [first | rest] = Enum.map(arity..1, fn(count) -> :"x#{count}" end)
-  #   Enum.reduce(
-  #     rest,
-  #     [:lambda, first, [f | Enum.reverse(params)]],
-  #     fn(param, lambda_acc) -> [:lambda, param, lambda_acc] end
-  #   )
-  # end
 end
