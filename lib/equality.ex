@@ -25,10 +25,9 @@ defmodule Klambda.Equality do
     arg1 == arg2
   end
 
-  # FIXME: lambda is simple list now
-  # def equal?(%Lambda{id: id1}, %Lambda{id: id2}) do
-  #   id1 == id2
-  # end
+  def equal?([:lambda, id1 | _], [:lambda, id2 | _]) do
+    id1 == id2
+  end
 
   def equal?(arg1, arg2) when is_pid(arg1) and is_pid(arg2) do
     arg1 == arg2

@@ -1,6 +1,5 @@
 defmodule Klambda.Reader.Eval do
   alias Klambda.Lambda
-  alias Klambda.Continuation
   alias Klambda.Cons
   alias Klambda.Env
   alias Klambda.Vector
@@ -13,7 +12,7 @@ defmodule Klambda.Reader.Eval do
 
   ##################### FUNCTIONS AND BINDINGS ###################
 
-  def eval([:defun, fn_name, params | body]) when is_atom(fn_name) do
+  def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
     [fst | rest] = Enum.reverse(params)
     curried = Enum.reduce(rest,
                           Lambda.create(fst, body),
@@ -91,6 +90,10 @@ defmodule Klambda.Reader.Eval do
 
   def eval(f) when is_function(f) do
     f.()
+  end
+
+  def eval([[:lambda, var, body], arg]) do
+    eval [Lambda.create(var, body), arg]
   end
 
   def eval([[:lambda, _, var, body] = lambda, arg]) do
