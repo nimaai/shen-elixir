@@ -1,4 +1,4 @@
-defmodule Lisp.Mixfile do
+defmodule Klambda.Mixfile do
   use Mix.Project
 
   def project do

@@ -1,4 +1,5 @@
 alias Klambda.Reader
 alias Klambda.Env
 
-Reader.read_input Env.init
+Env.init
+Reader.read_input

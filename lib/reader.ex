@@ -6,8 +6,6 @@ defmodule Klambda.Reader do
   """
 
   alias Klambda.Reader.Eval
-  alias Klambda.Lambda
-  alias Klambda.Cont
   alias Klambda.Cons
   alias Klambda.Vector
 
@@ -120,16 +118,20 @@ defmodule Klambda.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+  def lispy_print({:"simple-error", message}) do
+    message
+  end
+
   def lispy_print({:error, message}) do
     "ERROR: #{message}"
   end
 
-  def lispy_print(list) when is_list(list) do
-    list
-    |> Enum.map(&lispy_print/1)
-    |> Enum.join(" ")
-    |> (fn s -> "[#{s}]" end).()
-  end
+  # def lispy_print(list) when is_list(list) do
+  #   list
+  #   |> Enum.map(&lispy_print/1)
+  #   |> Enum.join(" ")
+  #   |> (fn s -> "[#{s}]" end).()
+  # end
 
   def lispy_print(str) when is_binary(str) do
     "\"" <> str <> "\""
@@ -139,12 +141,16 @@ defmodule Klambda.Reader do
     inspect(pid)
   end
 
-  def lispy_print(%Cont{} = cont) do
-    Cont.to_string(cont)
+  def lispy_print(f) when is_function(f) do
+    "<native function>"
   end
 
-  def lispy_print(%Lambda{} = lambda) do
-    Lambda.to_string(lambda)
+  def lispy_print([:lambda, id, param, _] = lambda) do
+    "<lambda (#{param}) #{id}>"
+  end
+
+  def lispy_print([_ | _] = expr) do
+    "<continuation>"
   end
 
   def lispy_print(%Cons{} = cons) do
@@ -180,9 +186,9 @@ defmodule Klambda.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  defp eval_catch(x, env) do
+  defp eval_catch(x) do
     try do
-      Eval.eval(hd(x), env)
+      Eval.eval(hd(x))
     catch
       e -> e
     end
@@ -190,7 +196,7 @@ defmodule Klambda.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  def read_input(env, num \\ 0, read_so_far \\ [], leading_text \\ nil) do
+  def read_input(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
     leading_text = if is_nil(leading_text) do
       "klambda(#{num})> "
     else
@@ -207,16 +213,16 @@ defmodule Klambda.Reader do
       tokens == [":quit"] ->
         nil
       not check_parens(read_so_far ++ tokens) ->
-        read_input(env, num, read_so_far ++ tokens, "")
+        read_input(num, read_so_far ++ tokens, "")
       :else ->
         read_so_far
         |> Kernel.++(tokens)
         |> read
-        |> eval_catch(env)
+        |> eval_catch
         |> lispy_print
         |> IO.puts
 
-        read_input(env, num + 1, [])
+        read_input(num + 1, [])
     end
   end
 end

@@ -5,42 +5,53 @@ defmodule Klambda.Env do
   require IEx
 
   def init do
-    {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
-    {:ok, globals_pid}= Bindings.start_link(
-      %{"*stinput*": :stdio,
-        "*stoutput*": :stdio,
-        "*home-directory*": "" # really???
+    func = fn ->
+      {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
+      {:ok, globals_pid}= Bindings.start_link(
+        %{"*stinput*": :stdio,
+          "*stoutput*": :stdio,
+          "*home-directory*": "" # really???
+        }
+      )
+
+      %{globals: globals_pid,
+        functions: functions_pid,
+        start_time: DateTime.utc_now() |> DateTime.to_unix()
       }
+    end
+    Agent.start_link(func, name: :env)
+  end
+
+  def lookup_global(sym) do
+    Bindings.lookup(
+      Agent.get(:env, fn state -> state[:globals] end),
+      sym
     )
-
-    %{locals: %{},
-      globals: globals_pid,
-      functions: functions_pid,
-      start_time: DateTime.utc_now() |> DateTime.to_unix()
-    }
   end
 
-  def lookup_global(%{globals: pid}, sym) do
-    Bindings.lookup(pid, sym)
+  def define_global(sym, val) do
+    Bindings.define(
+      Agent.get(:env, fn state -> state[:globals] end),
+      sym,
+      val
+    )
   end
 
-  def define_global(%{globals: pid}, sym, val) do
-    Bindings.define(pid, sym, val)
-  end
-
-  def lookup_function(%{functions: pid, locals: locals}, sym) do
+  def lookup_function(sym) do
+    %{functions: pid} = Agent.get(:env, fn state -> state end)
     gf = Bindings.lookup(pid, sym)
     if is_nil(gf) do
-      lf = locals[sym]
-      if is_nil(lf) do
-        throw {:error, "Undefined function #{sym}"}
-      end
+      throw {:error, "Undefined function #{sym}"}
     else
       gf
     end
   end
 
-  def define_function(%{functions: pid}, sym, lambda = %Lambda{}) do
-    Bindings.define(pid, sym, lambda)
+  def define_function(sym, [:lambda | _] = lambda) do
+    Bindings.define(
+      Agent.get(:env, fn state -> state[:functions] end),
+      sym,
+      lambda
+    )
   end
 end

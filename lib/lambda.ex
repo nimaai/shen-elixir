@@ -1,34 +1,28 @@
 defmodule Klambda.Lambda do
-  alias Klambda.Reader.Eval
-  require IEx
-
-  @enforce_keys :id
-  defstruct id: nil, params: [], body: []
-
-  def call(%Klambda.Lambda{params: params, body: body}, evaled_args, env) do
-    new_locals = Map.merge(env[:locals],
-                           params |> Enum.zip(evaled_args) |> Map.new)
-
-    new_env = Map.update!(env,
-                          :locals,
-                          fn _ -> new_locals end)
-
-    apply(&Eval.eval(&1, new_env), body)
+  def create(param, body) do
+    [:lambda,
+     Base.encode16(:crypto.strong_rand_bytes(6)),
+     param,
+     body]
   end
 
-  def call(nil, _args) do
-    throw {:error, "SyntaxError: undefined function call"}
+  def beta_reduce([:lambda, _, param, body], val) do
+    subst(body, param, val)
   end
 
-  def to_string(%Klambda.Lambda{id: id}) do
-    "<lambda #{id}>"
+  defp subst([fst | rest], param, val) do
+    [subst(fst, param, val) | subst(rest, param, val)]
   end
 
-  def create(params, body) do
-    %Klambda.Lambda{
-      id: Base.encode16( :crypto.strong_rand_bytes(6) ),
-      params: params,
-      body: body
-      }
+  defp subst(param, param, val) when is_atom(param) do
+    val
+  end
+
+  defp subst([], _, _) do
+    []
+  end
+
+  defp subst(param, _, _) do
+    param
   end
 end
