@@ -1,5 +1,5 @@
 defmodule Klambda.Cons do
-  alias Klambda.Reader
+  alias Klambda.Print
 
   @enforce_keys [:head]
   defstruct [:head, :tail]
@@ -7,11 +7,11 @@ defmodule Klambda.Cons do
   def to_string(%Klambda.Cons{ head: head, tail: tail }, open, close) do
     case tail do
       :end_of_cons ->
-        "#{open}#{Reader.lispy_print(head)}#{close}"
+        "#{open}#{Print.print(head)}#{close}"
       %Klambda.Cons{} ->
-        "#{open}#{Reader.lispy_print(head)} #{to_string(tail, "", "")}#{close}"
+        "#{open}#{Print.print(head)} #{to_string(tail, "", "")}#{close}"
       _ ->
-        "#{open}#{Reader.lispy_print(head)} | #{Reader.lispy_print(tail)}#{close}"
+        "#{open}#{Print.print(head)} | #{Print.print(tail)}#{close}"
     end
   end
 

@@ -1,6 +1,6 @@
 defmodule Klambda.Primitives do
   alias Klambda.Env
-  alias Klambda.Reader.Eval
+  alias Klambda.Eval
   alias Klambda.Vector
   alias Klambda.Cons
   alias Klambda.Equality

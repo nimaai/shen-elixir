@@ -1,4 +1,4 @@
-defmodule Klambda.Reader.Eval do
+defmodule Klambda.Eval do
   alias Klambda.Lambda
   alias Klambda.Cons
   alias Klambda.Env

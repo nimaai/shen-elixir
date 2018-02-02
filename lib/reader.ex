@@ -1,21 +1,11 @@
 defmodule Klambda.Reader do
-  require IEx
-
-  @moduledoc """
-    Contains functions that read and evaluate Klambda code.
-  """
-
-  alias Klambda.Reader.Eval
-  alias Klambda.Cons
-  alias Klambda.Vector
-
   def tokenise(expr) do
     expr
     |> String.replace(~r/([\(\)])/, " \\1 ")
     |> String.split
   end
 
-  def atomise(token) do
+  defp atomise(token) do
     cond do
       # If the token contains whitespace, it's not a bloody token.
       token =~ ~r/\s/ ->
@@ -42,6 +32,7 @@ defmodule Klambda.Reader do
   end
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   def read([]) do
     []
   end
@@ -90,139 +81,40 @@ defmodule Klambda.Reader do
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  defp check_parens(tokens, stack \\ [])
+  def check_parens(tokens, stack \\ [])
 
-  defp check_parens([], []) do
+  def check_parens([], []) do
     true
   end
 
-  defp check_parens([], [_|_]) do
+  def check_parens([], [_|_]) do
     false
   end
 
-  defp check_parens(["(" | tokens], stack) do
+  def check_parens(["(" | tokens], stack) do
     check_parens(tokens, ["(" | stack])
   end
 
-  defp check_parens([")" | _tokens], []) do
+  def check_parens([")" | _tokens], []) do
     false
   end
 
-  defp check_parens([")" | tokens], stack) do
+  def check_parens([")" | tokens], stack) do
     check_parens(tokens, Enum.drop(stack, 1))
   end
 
-  defp check_parens([_token | tokens], stack) do
+  def check_parens([_token | tokens], stack) do
     check_parens(tokens, stack)
   end
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  def lispy_print({:"simple-error", message}) do
-    message
-  end
-
-  def lispy_print({:error, message}) do
-    "ERROR: #{message}"
-  end
-
-  # def lispy_print(list) when is_list(list) do
-  #   list
-  #   |> Enum.map(&lispy_print/1)
-  #   |> Enum.join(" ")
-  #   |> (fn s -> "[#{s}]" end).()
-  # end
-
-  def lispy_print(str) when is_binary(str) do
-    "\"" <> str <> "\""
-  end
-
-  def lispy_print(pid) when is_pid(pid) do
-    inspect(pid)
-  end
-
-  def lispy_print(f) when is_function(f) do
-    "<native function>"
-  end
-
-  def lispy_print([:lambda, id, param, _] = lambda) do
-    "<lambda (#{param}) #{id}>"
-  end
-
-  def lispy_print([_ | _] = expr) do
-    "<continuation>"
-  end
-
-  def lispy_print(%Cons{} = cons) do
-    Cons.to_string(cons, "[", "]")
-  end
-
-  def lispy_print({:array, pid}) do
-    Vector.to_string(pid)
-  end
-
-  def lispy_print(:end_of_cons) do
-    "[]"
-  end
-
-  def lispy_print(nil) do
-    "nil"
-  end
-
-  def lispy_print(term) do
-    to_string term
-  end
-
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  defp skip_newlines(input) do
+  def skip_newlines(input) do
     if input == "\n" do
       new_input = IO.gets("")
       skip_newlines(new_input)
     else
       input
-    end
-  end
-
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  defp eval_catch(x) do
-    try do
-      Eval.eval(hd(x))
-    catch
-      e -> e
-    end
-  end
-
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  def read_input(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
-    leading_text = if is_nil(leading_text) do
-      "klambda(#{num})> "
-    else
-      leading_text
-    end
-
-    tokens =
-      leading_text
-      |> IO.gets
-      |> skip_newlines
-      |> tokenise
-
-    cond do
-      tokens == [":quit"] ->
-        nil
-      not check_parens(read_so_far ++ tokens) ->
-        read_input(num, read_so_far ++ tokens, "")
-      :else ->
-        read_so_far
-        |> Kernel.++(tokens)
-        |> read
-        |> eval_catch
-        |> lispy_print
-        |> IO.puts
-
-        read_input(num + 1, [])
     end
   end
 end
