@@ -1,0 +1,59 @@
+"Copyright (c) 2015, Mark Tarver
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of Mark Tarver may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY Mark Tarver ''AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL Mark Tarver BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+
+(defun load (V1672) (let Load (let Start (get-time run) (let Result (shen.load-help (value shen.*tc*) (read-file V1672)) (let Finish (get-time run) (let Time (- Finish Start) (let Message (shen.prhush (cn "
+run time: " (cn (str Time) " secs
+")) (stoutput)) Result))))) (let Infs (if (value shen.*tc*) (shen.prhush (cn "
+typechecked in " (shen.app (inferences) " inferences
+" shen.a)) (stoutput)) shen.skip) loaded)))
+
+(defun shen.load-help (V1679 V1680) (cond ((= false V1679) (for-each (lambda X (shen.prhush (shen.app (shen.eval-without-macros X) "
+" shen.s) (stoutput))) V1680)) (true (let RemoveSynonyms (mapcan (lambda X (shen.remove-synonyms X)) V1680) (let Table (mapcan (lambda X (shen.typetable X)) RemoveSynonyms) (let Assume (for-each (lambda X (shen.assumetype X)) Table) (trap-error (for-each (lambda X (shen.typecheck-and-load X)) RemoveSynonyms) (lambda E (shen.unwind-types E Table)))))))))
+
+(defun shen.remove-synonyms (V1682) (cond ((and (cons? V1682) (= shen.synonyms-help (hd V1682))) (do (eval V1682) ())) (true (cons V1682 ()))))
+
+(defun shen.typecheck-and-load (V1684) (do (nl 1) (shen.typecheck-and-evaluate V1684 (gensym A))))
+
+(defun shen.typetable (V1690) (cond ((and (cons? V1690) (and (= define (hd V1690)) (cons? (tl V1690)))) (let Sig (compile (lambda Y (shen.<sig+rest> Y)) (tl (tl V1690)) (lambda E (simple-error (shen.app (hd (tl V1690)) " lacks a proper signature.
+" shen.a)))) (cons (cons (hd (tl V1690)) Sig) ()))) (true ())))
+
+(defun shen.assumetype (V1692) (cond ((cons? V1692) (declare (hd V1692) (tl V1692))) (true (shen.f_error shen.assumetype))))
+
+(defun shen.unwind-types (V1699 V1700) (cond ((= () V1700) (simple-error (error-to-string V1699))) ((and (cons? V1700) (cons? (hd V1700))) (do (shen.remtype (hd (hd V1700))) (shen.unwind-types V1699 (tl V1700)))) (true (shen.f_error shen.unwind-types))))
+
+(defun shen.remtype (V1702) (set shen.*signedfuncs* (shen.removetype V1702 (value shen.*signedfuncs*))))
+
+(defun shen.removetype (V1710 V1711) (cond ((= () V1711) ()) ((and (cons? V1711) (and (cons? (hd V1711)) (= (hd (hd V1711)) V1710))) (shen.removetype (hd (hd V1711)) (tl V1711))) ((cons? V1711) (cons (hd V1711) (shen.removetype V1710 (tl V1711)))) (true (shen.f_error shen.removetype))))
+
+(defun shen.<sig+rest> (V1713) (let Parse_shen.<signature> (shen.<signature> V1713) (if (not (= (fail) Parse_shen.<signature>)) (let Parse_<!> (<!> Parse_shen.<signature>) (if (not (= (fail) Parse_<!>)) (shen.pair (hd Parse_<!>) (shen.hdtl Parse_shen.<signature>)) (fail))) (fail))))
+
+(defun write-to-file (V1716 V1717) (let Stream (open V1716 out) (let String (if (string? V1717) (shen.app V1717 "
+
+" shen.a) (shen.app V1717 "
+
+" shen.s)) (let Write (pr String Stream) (let Close (close Stream) V1717)))))
+
+
+
