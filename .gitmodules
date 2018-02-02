@@ -1,0 +1,3 @@
+[submodule "shen-sources"]
+	path = shen-sources
+	url = https://github.com/Shen-Language/shen-sources.git
