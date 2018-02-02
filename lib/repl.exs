@@ -17,8 +17,6 @@ defmodule Repl do
       |> Reader.tokenise
 
     cond do
-      tokens == [":quit"] ->
-        nil
       not Reader.check_parens(read_so_far ++ tokens) ->
         repl(num, read_so_far ++ tokens, "")
       :else ->
