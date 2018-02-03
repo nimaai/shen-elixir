@@ -1,5 +1,8 @@
 defmodule Klambda.Reader do
+  require IEx
+
   def tokenise(expr) do
+    IEx.pry
     expr
     |> String.replace(~r/([\(\)])/, " \\1 ")
     |> String.split
@@ -24,7 +27,7 @@ defmodule Klambda.Reader do
       token =~ ~r/^".*"$/ ->
         String.slice(token, 1, String.length(token) - 2)
       # If the token is a valid identifier
-      token =~ ~r/^[^\d\(\)\.',@#][^\(\)\.`',@#]*$/ ->
+      token =~ ~r/^[^\d\(\)\.,][^\(\),]*$/ ->
         String.to_atom token
       :else ->
         throw {:error, "Cannot parse token: #{token}"}
@@ -105,16 +108,5 @@ defmodule Klambda.Reader do
 
   def check_parens([_token | tokens], stack) do
     check_parens(tokens, stack)
-  end
-
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  def skip_newlines(input) do
-    if input == "\n" do
-      new_input = IO.gets("")
-      skip_newlines(new_input)
-    else
-      input
-    end
   end
 end

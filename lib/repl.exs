@@ -1,4 +1,4 @@
-defmodule Repl do
+defmodule Klambda.Repl do
   alias Klambda.Reader
   alias Klambda.Eval
   alias Klambda.Print
@@ -13,21 +13,20 @@ defmodule Repl do
     tokens =
       leading_text
       |> IO.gets
-      |> Reader.skip_newlines
+      |> skip_newlines
       |> Reader.tokenise
 
-    cond do
-      not Reader.check_parens(read_so_far ++ tokens) ->
-        repl(num, read_so_far ++ tokens, "")
-      :else ->
-        read_so_far
-        |> Kernel.++(tokens)
-        |> Reader.read
-        |> eval_catch
-        |> Print.print
-        |> IO.puts
+    if not Reader.check_parens(read_so_far ++ tokens) do
+      repl(num, read_so_far ++ tokens, "")
+    else
+      read_so_far
+      |> Kernel.++(tokens)
+      |> Reader.read
+      |> eval_catch
+      |> Print.print
+      |> IO.puts
 
-        repl(num + 1, [])
+      repl(num + 1, [])
     end
   end
 
@@ -38,7 +37,16 @@ defmodule Repl do
       e -> e
     end
   end
+
+  defp skip_newlines(input) do
+    if input == "\n" do
+      new_input = IO.gets("")
+      skip_newlines(new_input)
+    else
+      input
+    end
+  end
 end
 
 Klambda.Env.init
-Repl.repl
+Klambda.Repl.repl
