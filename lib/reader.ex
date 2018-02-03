@@ -2,7 +2,6 @@ defmodule Klambda.Reader do
   require IEx
 
   def tokenise(expr) do
-    IEx.pry
     expr
     |> String.replace(~r/([\(\)])/, " \\1 ")
     |> String.split
