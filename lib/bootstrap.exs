@@ -12,14 +12,16 @@ defmodule Shen.Bootstrap do
     read_and_eval_form(f)
   end
 
-  def read_and_eval_form(f) do
-    c = getc(f)
+  def read_and_eval_form(file_iod) do
+    c = getc(file_iod)
     if c == :eof do
       :ok
     else
-      :ok = skip_newlines(f)
-      {"", form} = read_form(f)
+      :ok = skip_newlines(file_iod)
+      {:ok, form_iod} = StringIO.open("")
+      {"", form} = read_form(file_iod, form_iod, 0, 0)
       form
+      |> IO.inspect
       |> Reader.tokenise
       |> hd
       |> Eval.eval
@@ -27,28 +29,17 @@ defmodule Shen.Bootstrap do
     end
   end
 
-  defp read_form(_, read_so_far \\ nil, paren_count \\ 0)
-
-  defp read_form(file, nil, 0) do
-    {:ok, read_so_far} = StringIO.open("")
-    read_form(file, read_so_far, 0)
-  end
-
-  defp read_form(file, read_so_far, paren_count) do
-    if parent_count == 0 do
-      StringIO.contents(read_so_far)
+  defp read_form(file, form_iod, left, right) do
+    if left == right and left > 0 and right > 0 do
+      StringIO.contents(form_iod)
     else
       c = getc(file)
-      :ok = IO.binwrite(read_so_far, c)
-      read_form(
-        file,
-        read_so_far,
-        case c do
-          "(" -> paren_count + 1
-          ")" -> paren_count - 1
-          _ -> paren_count
-        end
-      )
+      :ok = IO.binwrite(form_iod, c)
+      case c do
+        "(" -> read_form(file, form_iod, left + 1, right)
+        ")" -> read_form(file, form_iod, left, right + 1)
+        _ -> read_form(file, form_iod, left, right)
+      end
     end
   end
 
@@ -66,16 +57,17 @@ defmodule Shen.Bootstrap do
     if c == "\n" do
       skip_newlines(f)
     else
-      buf(c)
+      bufc(c)
+      :ok
     end
   end
 
   defp getc(f) do
-    c = Agent.get_and_update(:buffer, fn(b) -> List.pop_at(b, 1) end)
+    c = Agent.get_and_update(:buffer, fn(b) -> List.pop_at(b, 0) end)
     c || IO.binread(f, 1)
   end
 
-  defp buf(c) do
+  defp bufc(c) do
     Agent.update(:buffer, fn(b) -> [c] ++ b end)
   end
 end
