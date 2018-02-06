@@ -20,12 +20,14 @@ defmodule Shen.Bootstrap do
       :ok = skip_newlines(file_iod)
       {:ok, form_iod} = StringIO.open("")
       {"", form} = read_form(file_iod, form_iod, 0, 0)
+
       form
       |> IO.inspect
       |> Reader.tokenise
       |> hd
       |> Eval.eval
-      |> read_and_eval_form
+
+      read_and_eval_form(file_iod)
     end
   end
 
@@ -57,8 +59,7 @@ defmodule Shen.Bootstrap do
     if c == "\n" do
       skip_newlines(f)
     else
-      bufc(c)
-      :ok
+      :ok = bufc(c)
     end
   end
 
