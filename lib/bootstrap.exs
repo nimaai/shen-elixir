@@ -9,15 +9,16 @@ defmodule Shen.Bootstrap do
     Agent.start_link(fn -> [] end, name: :buffer)
     {:ok, f} = File.open(path, [:read])
     :ok = skip_copyright(f)
-    read_and_eval_form(f)
+    :ok = read_and_eval_form(f)
   end
 
   def read_and_eval_form(file_iod) do
+    :ok = skip_newlines(file_iod)
     c = getc(file_iod)
     if c == :eof do
       :ok
     else
-      :ok = skip_newlines(file_iod)
+      ungetc(c)
       {:ok, form_iod} = StringIO.open("")
       {"", form} = read_form(file_iod, form_iod, 0, 0)
 
@@ -59,7 +60,7 @@ defmodule Shen.Bootstrap do
     if c == "\n" do
       skip_newlines(f)
     else
-      :ok = bufc(c)
+      :ok = ungetc(c)
     end
   end
 
@@ -68,7 +69,7 @@ defmodule Shen.Bootstrap do
     c || IO.binread(f, 1)
   end
 
-  defp bufc(c) do
+  defp ungetc(c) do
     Agent.update(:buffer, fn(b) -> [c] ++ b end)
   end
 end

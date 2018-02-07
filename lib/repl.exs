@@ -26,6 +26,9 @@ defmodule Klambda.Repl do
       |> Print.print
       |> IO.puts
 
+      Klambda.Bindings.all(Agent.get(:env, fn(env) -> env[:functions] end))
+      |> IO.inspect
+
       repl(num + 1, [])
     end
   end
