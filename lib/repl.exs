@@ -2,6 +2,7 @@ defmodule Klambda.Repl do
   alias Klambda.Reader
   alias Klambda.Eval
   alias Klambda.Print
+  require IEx
 
   def repl(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
     leading_text = if is_nil(leading_text) do
@@ -26,9 +27,6 @@ defmodule Klambda.Repl do
       |> Print.print
       |> IO.puts
 
-      Klambda.Bindings.all(Agent.get(:env, fn(env) -> env[:functions] end))
-      |> IO.inspect
-
       repl(num + 1, [])
     end
   end
@@ -51,5 +49,8 @@ defmodule Klambda.Repl do
   end
 end
 
+# :dbg.tracer()
+# :dbg.p(:all, :c)
+# :dbg.tpl(Klambda.Reader, :read, 1, :x)
 Klambda.Env.init
 Klambda.Repl.repl

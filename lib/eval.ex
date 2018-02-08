@@ -17,7 +17,7 @@ defmodule Klambda.Eval do
     curried = Enum.reduce(rest,
                           Lambda.create(fst, body),
                           fn(param, lambda_acc) -> Lambda.create(param, lambda_acc) end)
-    :ok = Env.define_function(fn_name, curried |> IO.inspect)
+    :ok = Env.define_function(fn_name, curried)
     fn_name
   end
 

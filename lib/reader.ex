@@ -4,11 +4,29 @@ defmodule Klambda.Reader do
   def tokenise(expr) do
     expr
     |> String.replace(~r/([\(\)])/, " \\1 ")
-    |> String.split
+    |> split
+  end
+
+  def split(expr) do
+    Enum.reduce(
+      String.split(expr, ~r/("[^"]*")/, include_captures: true),
+      [],
+      fn(s, acc) ->
+        if Regex.match?(~r/("[^"]*")/, s) do
+          acc ++ [{:string, s}]
+        else
+          acc ++ String.split(s)
+        end
+      end
+    )
   end
 
   defp atomise(token) do
     cond do
+      # If the token is enclosed in double quotes
+      match?({:string, _}, token) ->
+        {:string, s} = token
+        String.slice(s, 1, String.length(s) - 2)
       # If the token contains whitespace, it's not a bloody token.
       token =~ ~r/\s/ ->
         throw {:error, "Unexpected whitespace found in token: #{token}"}
@@ -22,9 +40,6 @@ defmodule Klambda.Reader do
         true
       token == "false" ->
         false
-      # If the token is enclosed in double quotes
-      token =~ ~r/^".*"$/ ->
-        String.slice(token, 1, String.length(token) - 2)
       # If the token is a valid identifier
       token =~ ~r/^[^\d\(\)\.,][^\(\),]*$/ ->
         String.to_atom token

@@ -23,8 +23,8 @@ defmodule Shen.Bootstrap do
       {"", form} = read_form(file_iod, form_iod, 0, 0)
 
       form
-      |> IO.inspect
       |> Reader.tokenise
+      |> Reader.read
       |> hd
       |> Eval.eval
 
