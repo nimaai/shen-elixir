@@ -1,8 +1,6 @@
 defmodule Klambda.Eval do
   alias Klambda.Lambda
-  alias Klambda.Cons
   alias Klambda.Env
-  alias Klambda.Vector
   alias Klambda.Primitives
   require IEx
   require Integer
@@ -27,6 +25,10 @@ defmodule Klambda.Eval do
     else
       throw {:error, "Required argument is not a symbol"}
     end
+  end
+
+  def eval([:lambda, _, _, _] = lambda) do
+    lambda
   end
 
   def eval([:let, sym, val, body]) do
@@ -96,7 +98,7 @@ defmodule Klambda.Eval do
     eval [Lambda.create(var, body), arg]
   end
 
-  def eval([[:lambda, _, var, body] = lambda, arg]) do
+  def eval([[:lambda, _, _, _] = lambda, arg]) do
     eval Lambda.beta_reduce(lambda, eval(arg))
   end
 
