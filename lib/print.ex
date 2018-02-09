@@ -1,5 +1,6 @@
 defmodule Klambda.Print do
   alias Klambda.Vector
+  require IEx
 
   def print({:"simple-error", message}) do
     message
@@ -18,7 +19,7 @@ defmodule Klambda.Print do
   end
 
   def print(f) when is_function(f) do
-    "<native function>"
+    inspect(f)
   end
 
   def print([:lambda, id, param, _] = lambda) do
