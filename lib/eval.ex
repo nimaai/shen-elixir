@@ -39,10 +39,15 @@ defmodule Klambda.Eval do
     eval [Lambda.create(sym, body), eval(val)]
   end
 
-  # TODO: local env captured??
   def eval([:freeze, expr]) do
     Lambda.create(nil, expr)
   end
+
+  # NOTE: possible shen override
+  # def eval([:thaw, expr]) do
+  #   [:lambda, _, nil, body] = eval(expr)
+  #   eval(body)
+  # end
 
   ##################### CONDITIONALS #############################
 
