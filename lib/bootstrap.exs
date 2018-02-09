@@ -75,5 +75,22 @@ defmodule Shen.Bootstrap do
 end
 
 Env.init
-Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/toplevel.kl")
-# Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/core.kl")
+Enum.each(
+  [
+    "toplevel.kl",
+    "core.kl",
+    "sys.kl",
+    "sequent.kl",
+    "yacc.kl",
+    "reader.kl",
+    "prolog.kl",
+    "track.kl",
+    "load.kl",
+    "writer.kl",
+    "macros.kl",
+    "declarations.kl",
+    # "t-star.kl",
+    # "types.kl"
+  ],
+  fn(file) -> Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}") end
+)

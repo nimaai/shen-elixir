@@ -13,6 +13,8 @@ defmodule Klambda.Primitives do
 
       or: fn(x) -> fn(y) -> x or y end end,
 
+      not: fn(x) -> not(x) end,
+
       if: fn(condition) -> fn(consequent) -> fn(alternative) ->
         if condition, do: consequent, else: alternative
       end end end,

@@ -22,12 +22,16 @@ defmodule Klambda.Print do
     inspect(f)
   end
 
-  def print([:lambda, id, param, _] = lambda) do
+  def print([:lambda, id, param, _]) do
     "<lambda (#{param}) #{id}>"
   end
 
   def print([_ | _] = expr) do
     inspect(expr)
+  end
+
+  def print([]) do
+    inspect([])
   end
 
   def print({:array, pid}) do

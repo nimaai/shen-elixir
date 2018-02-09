@@ -52,32 +52,22 @@ defmodule Klambda.Eval do
   ##################### CONDITIONALS #############################
 
   def eval([:if, condition, consequent, alternative]) do
-    if eval(condition) == true do
+    if eval(condition) do
       eval(consequent)
     else
       eval(alternative)
     end
   end
 
-  def eval([:cond, condition, consequent | rest]) do
-    if [condition, consequent | rest] |> length |> Integer.is_odd do
-      throw {:error, "Unbalanced cond clauses"}
-    end
-
-    if eval(condition) == true do
+  def eval([:cond, [condition, consequent] | rest]) do
+    if eval(condition) do
       eval(consequent)
     else
       eval([:cond | rest])
     end
   end
 
-  def eval([:cond, _condition]) do
-    throw {:error, "Unbalanced cond clause"}
-  end
-
-  def eval([:cond]) do
-    throw {:error, "No matching cond clause"}
-  end
+  def eval([:cond]), do: []
 
   def eval([:and, arg1, arg2]) do
     eval(arg1) and eval(arg2)
