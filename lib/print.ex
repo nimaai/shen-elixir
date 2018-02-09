@@ -26,7 +26,7 @@ defmodule Klambda.Print do
     "<lambda (#{param}) #{id}>"
   end
 
-  def print([_ | _] = expr) do
+  def print({:cons, [_ | _] = expr}) do
     inspect(expr)
   end
 

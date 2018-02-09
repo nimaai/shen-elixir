@@ -132,18 +132,18 @@ defmodule Klambda.Primitives do
       ############################ CONSES #####################################
 
       "cons?": fn(arg) ->
-        match?([_ | _], arg)
+        match?({:cons, [_ | _]}, arg)
       end,
 
       cons: fn(head) -> fn(tail) ->
-        [head | tail]
+        {:cons, [head | tail]}
       end end,
 
-      hd: fn([head | _]) ->
+      hd: fn({:cons, [head | _]}) ->
         head
       end,
 
-      tl: fn([_ | tail]) ->
+      tl: fn({:cons, [_ | tail]}) ->
         tail
       end,
 
