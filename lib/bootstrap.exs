@@ -21,15 +21,17 @@ defmodule Shen.Bootstrap do
       ungetc(c)
       {:ok, form_iod} = StringIO.open("")
       {"", form} = read_form(file_iod, form_iod, 0, 0)
-
-      form
-      |> Reader.tokenise
-      |> Reader.read
-      |> hd
-      |> Eval.eval
-
+      eval_form(form)
       read_and_eval_form(file_iod)
     end
+  end
+
+  def eval_form(form) do
+    form
+    |> Reader.tokenise
+    |> Reader.read
+    |> hd
+    |> Eval.eval
   end
 
   defp read_form(file, form_iod, left, right) do
@@ -75,6 +77,9 @@ defmodule Shen.Bootstrap do
 end
 
 Env.init
+:dbg.tracer()
+:dbg.p(:all, :c)
+# :dbg.tp(Klambda.Eval, :eval, 1, :x)
 Enum.each(
   [
     "toplevel.kl",
