@@ -11,7 +11,7 @@ defmodule Klambda.Eval do
   ##################### FUNCTIONS AND BINDINGS ###################
 
   def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
-    bbody = if [] = params do
+    bbody = if match?([], params) do
       Lambda.create(nil, body)
     else
       [fst | rest] = Enum.reverse(params)
@@ -94,10 +94,9 @@ defmodule Klambda.Eval do
       Primitives.mapping()[f]
     else
       func = Env.lookup_function(f)
-      if [:lambda, _, nil, body] = func do
-        eval(body)
-      else
-        func
+      case func do
+        [:lambda, _, nil, body] -> eval(body)
+        _ -> func
       end
     end
   end
