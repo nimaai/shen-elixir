@@ -1,6 +1,5 @@
 defmodule Klambda.Env do
   alias Klambda.Bindings
-  alias Klambda.Lambda
   alias Klambda.Primitives
   require IEx
 
@@ -47,11 +46,11 @@ defmodule Klambda.Env do
     end
   end
 
-  def define_function(sym, [:lambda | _] = lambda) do
+  def define_function(sym, fn_body) do
     Bindings.define(
       Agent.get(:env, fn state -> state[:functions] end),
       sym,
-      lambda
+      fn_body
     )
   end
 end

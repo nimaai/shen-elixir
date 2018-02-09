@@ -11,11 +11,15 @@ defmodule Klambda.Eval do
   ##################### FUNCTIONS AND BINDINGS ###################
 
   def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
-    [fst | rest] = Enum.reverse(params)
-    curried = Enum.reduce(rest,
-                          Lambda.create(fst, body),
-                          fn(param, lambda_acc) -> Lambda.create(param, lambda_acc) end)
-    :ok = Env.define_function(fn_name, curried)
+    bbody = if [] = params do
+      Lambda.create(nil, body)
+    else
+      [fst | rest] = Enum.reverse(params)
+      Enum.reduce(rest,
+                  Lambda.create(fst, body),
+                  fn(param, lambda_acc) -> Lambda.create(param, lambda_acc) end)
+    end
+    :ok = Env.define_function(fn_name, bbody)
     fn_name
   end
 
@@ -35,8 +39,9 @@ defmodule Klambda.Eval do
     eval [Lambda.create(sym, body), eval(val)]
   end
 
+  # TODO: local env captured??
   def eval([:freeze, expr]) do
-    expr
+    Lambda.create(nil, expr)
   end
 
   ##################### CONDITIONALS #############################
@@ -80,9 +85,15 @@ defmodule Klambda.Eval do
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
   def eval([f]) when is_atom(f) do
-    cond do
-      Map.has_key?(Primitives.mapping(), f) -> Primitives.mapping()[f]
-      true -> Env.lookup_function(f)
+    if Map.has_key?(Primitives.mapping(), f) do
+      Primitives.mapping()[f]
+    else
+      func = Env.lookup_function(f)
+      if [:lambda, _, nil, body] = func do
+        eval(body)
+      else
+        func
+      end
     end
   end
 

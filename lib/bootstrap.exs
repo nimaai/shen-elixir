@@ -75,4 +75,5 @@ defmodule Shen.Bootstrap do
 end
 
 Env.init
-Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/core.kl")
+Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/toplevel.kl")
+# Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/core.kl")

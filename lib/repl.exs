@@ -51,6 +51,6 @@ end
 
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tpl(Klambda.Reader, :read, 1, :x)
+# :dbg.tpl(Klambda.Eval, :eval, 1, :x)
 Klambda.Env.init
 Klambda.Repl.repl
