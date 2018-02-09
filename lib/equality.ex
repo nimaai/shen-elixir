@@ -13,8 +13,8 @@ defmodule Klambda.Equality do
     arg1 == arg2
   end
 
-  def equal?(%Cons{head: head1, tail: tail1}, %Cons{head: head2, tail: tail2}) do
-    equal?(head1, head2) && equal?(tail1, tail2)
+  def equal?([_ | _] = cons1, [_ | _] = cons2) do
+    cons1 == cons2
   end
 
   def equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do

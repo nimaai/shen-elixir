@@ -2,7 +2,6 @@ defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Eval
   alias Klambda.Vector
-  alias Klambda.Cons
   alias Klambda.Equality
   require IEx
 
@@ -133,32 +132,19 @@ defmodule Klambda.Primitives do
       ############################ CONSES #####################################
 
       "cons?": fn(arg) ->
-        match?( %Cons{}, arg )
+        match?([_ | _], arg)
       end,
 
       cons: fn(head) -> fn(tail) ->
-        %Cons{
-          head: head,
-          tail: if match?( [], tail ) do
-            :end_of_cons
-          else
-            tail
-          end
-        }
+        [head | tail]
       end end,
 
-      hd: fn(arg) ->
-        case arg do
-          %Cons{head: head} -> head
-          _ -> throw {:error, "Argument is not a cons"}
-        end
+      hd: fn([head | _]) ->
+        head
       end,
 
-      tl: fn(arg) ->
-        case arg do
-          %Cons{tail: tail} -> tail
-          _ -> throw {:error, "Argument is not a cons"}
-        end
+      tl: fn([_ | tail]) ->
+        tail
       end,
 
       ############################ STREAMS ####################################

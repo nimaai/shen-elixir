@@ -1,5 +1,4 @@
 defmodule Klambda.Print do
-  alias Klambda.Cons
   alias Klambda.Vector
 
   def print({:"simple-error", message}) do
@@ -27,19 +26,11 @@ defmodule Klambda.Print do
   end
 
   def print([_ | _] = expr) do
-    "<continuation>"
-  end
-
-  def print(%Cons{} = cons) do
-    Cons.to_string(cons, "[", "]")
+    inspect(expr)
   end
 
   def print({:array, pid}) do
     Vector.to_string(pid)
-  end
-
-  def print(:end_of_cons) do
-    "[]"
   end
 
   def print(nil) do
