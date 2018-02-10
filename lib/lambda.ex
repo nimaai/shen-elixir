@@ -1,4 +1,6 @@
 defmodule Klambda.Lambda do
+  require IEx
+
   def create(param, body) do
     [:lambda,
      Base.encode16(:crypto.strong_rand_bytes(6)),
@@ -6,23 +8,33 @@ defmodule Klambda.Lambda do
      body]
   end
 
-  def beta_reduce([:lambda, _, param, body], val) do
-    subst(body, param, val)
+  def beta_reduce([:lambda, _id, param, body], param, val) do
+    beta_reduce_body(body, param, val)
   end
 
-  defp subst([fst | rest], param, val) do
-    [subst(fst, param, val) | subst(rest, param, val)]
+  # param is not free
+  def beta_reduce_body([:lambda, param, _] = lambda, param, _) do
+    lambda
   end
 
-  defp subst(param, param, val) when is_atom(param) do
+  # param is free
+  def beta_reduce_body([:lambda, param_x, body], param_y, val) do
+    [:lambda, param_x, beta_reduce_body(body, param_y, val)]
+  end
+
+  def beta_reduce_body([fst | rest], param, val) do
+    [beta_reduce_body(fst, param, val) | beta_reduce_body(rest, param, val)]
+  end
+
+  def beta_reduce_body(param, param, val) when is_atom(param) do
     val
   end
 
-  defp subst([], _, _) do
+  def beta_reduce_body([], _, _) do
     []
   end
 
-  defp subst(param, _, _) do
-    param
+  def beta_reduce_body(val, _, _) do
+    val
   end
 end
