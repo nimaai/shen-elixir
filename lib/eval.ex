@@ -31,7 +31,7 @@ defmodule Klambda.Eval do
     end
   end
 
-  def eval([:lambda, _, _, _] = lambda) do
+  def eval([:lambda, _id, _, _] = lambda) do
     lambda
   end
 
@@ -45,7 +45,7 @@ defmodule Klambda.Eval do
 
   # NOTE: possible shen override
   # def eval([:thaw, expr]) do
-  #   [:lambda, _, nil, body] = eval(expr)
+  #   [:lambda, _id, nil, body] = eval(expr)
   #   eval(body)
   # end
 
@@ -85,7 +85,7 @@ defmodule Klambda.Eval do
     else
       func = Env.lookup_function(f)
       case func do
-        [:lambda, _, nil, body] -> eval(body)
+        [:lambda, _id, nil, body] -> eval(body)
         _ -> func
       end
     end
@@ -103,8 +103,8 @@ defmodule Klambda.Eval do
     eval [Lambda.create(var, body), arg]
   end
 
-  def eval([[:lambda, _, _, _] = lambda, arg]) do
-    eval Lambda.beta_reduce(lambda, eval(arg))
+  def eval([[:lambda, _id, param, _] = lambda, arg]) do
+    eval Lambda.beta_reduce(lambda, param, eval(arg))
   end
 
   def eval([[_ | _] = f, arg]) do
