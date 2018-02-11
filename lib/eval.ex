@@ -11,14 +11,19 @@ defmodule Klambda.Eval do
   ##################### FUNCTIONS AND BINDINGS ###################
 
   def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
-    bbody = if match?([], params) do
-      Lambda.create(nil, body)
-    else
-      [fst | rest] = Enum.reverse(params)
-      Enum.reduce(rest,
-                  Lambda.create(fst, body),
-                  fn(param, lambda_acc) -> Lambda.create(param, lambda_acc) end)
-    end
+    bbody =
+      if match?([], params) do
+        Lambda.create(nil, body)
+      else
+        [fst | rest] = Enum.reverse(params)
+        Enum.reduce(
+          rest,
+          Lambda.create(fst, body),
+          fn(param, lambda_acc) ->
+            Lambda.create(param, lambda_acc)
+          end
+        )
+      end
     :ok = Env.define_function(fn_name, bbody)
     fn_name
   end
@@ -91,7 +96,11 @@ defmodule Klambda.Eval do
     end
   end
 
-  def eval([_]) do
+  def eval([[:lambda, _id, nil, body]]) do
+    eval body
+  end
+
+  def eval([_] = f) do
     throw {:error, "Illegal function call"}
   end
 
@@ -124,6 +133,8 @@ defmodule Klambda.Eval do
   def eval([f | args]) do
     # eval [[[f], arg1], arg2] ... or
     # eval [[[lambda x [lambda y ...]], arg1] arg2]
+
+    # if (not match?([:lambda | _], f)), do: IO.inspect([f | args])
     f_expr = if match?([:lambda | _], f), do: f, else: [f]
     eval(
       Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)

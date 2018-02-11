@@ -27,7 +27,14 @@ defmodule Shen.Bootstrap do
   end
 
   def eval_form(form) do
+    # if (String.starts_with?(form, "(shen.initialise_arity_table")) do
+    #   :dbg.tracer()
+    #   :dbg.p(:all, :c)
+    #   :dbg.tpl(Klambda.Eval, :eval, 1, :x)
+    # end
+
     form
+    |> IO.inspect
     |> Reader.tokenise
     |> Reader.read
     |> hd
@@ -77,8 +84,8 @@ defmodule Shen.Bootstrap do
 end
 
 Env.init
-:dbg.tracer()
-:dbg.p(:all, :c)
+# :dbg.tracer()
+# :dbg.p(:all, :c)
 # :dbg.tp(Klambda.Eval, :eval, 1, :x)
 Enum.each(
   [
@@ -97,5 +104,8 @@ Enum.each(
     # "t-star.kl",
     # "types.kl"
   ],
-  fn(file) -> Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}") end
+  fn(file) ->
+    IO.puts("loading: #{file}")
+    Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}")
+  end
 )

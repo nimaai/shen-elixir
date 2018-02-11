@@ -69,6 +69,7 @@ defmodule Klambda.Primitives do
       pos: fn(arg) -> fn(n) ->
         unit = String.at(arg, n)
         if is_nil(unit) do
+          IEx.pry
           throw {:error, "String index is out bounds"}
         else
           unit
