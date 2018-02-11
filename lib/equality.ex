@@ -13,8 +13,12 @@ defmodule Klambda.Equality do
     arg1 == arg2
   end
 
-  def equal?([_ | _] = cons1, [_ | _] = cons2) do
-    cons1 == cons2
+  def equal?({:cons, list1}, {:cons, list2}) do
+    list1 == list2
+  end
+
+  def equal?([], []) do
+    true
   end
 
   def equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do
