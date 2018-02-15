@@ -34,7 +34,7 @@ defmodule Shen.Bootstrap do
     # end
 
     form
-    |> IO.inspect
+    # |> IO.inspect
     |> Reader.tokenise
     |> Reader.read
     |> hd
@@ -101,8 +101,8 @@ Enum.each(
     "writer.kl",
     "macros.kl",
     "declarations.kl",
-    # "t-star.kl",
-    # "types.kl"
+    "t-star.kl",
+    "types.kl"
   ],
   fn(file) ->
     IO.puts("loading: #{file}")

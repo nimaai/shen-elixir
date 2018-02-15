@@ -68,7 +68,6 @@ defmodule Klambda.Primitives do
       pos: fn(arg) -> fn(n) ->
         unit = String.at(arg, n)
         if is_nil(unit) do
-          IEx.pry
           throw {:error, "String index is out bounds"}
         else
           unit
@@ -86,12 +85,14 @@ defmodule Klambda.Primitives do
 
       cn: fn(s1) -> fn(s2) -> s1 <> s2 end end,
 
+      # TODO: fix the cases
       str: fn(arg) ->
         cond do
           is_bitstring(arg) -> "\"" <> arg <> "\""
           match?([:lambda | _], arg) -> "<lambda>"
           match?([_ | _], arg) -> "<continuation>"
           match?({:vector, _, _}, arg) -> "<vector>"
+          match?({:cons, [_ | _]}, arg) -> inspect(elem(arg, 1))
           true -> to_string(arg)
         end
       end,
