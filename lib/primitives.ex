@@ -1,7 +1,6 @@
 defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Eval
-  alias Klambda.Vector
   alias Klambda.Equality
   require IEx
 
@@ -114,20 +113,30 @@ defmodule Klambda.Primitives do
 
       ############################ ARRAYS #####################################
 
-      absvector: fn(arg) ->
-        Vector.new(arg)
+      absvector: fn(size) ->
+        tuple = Tuple.duplicate(:nil, size)
+        {:ok, pid} = Agent.start_link(fn -> tuple end)
+        {:vector, pid}
       end,
 
-      "address->": fn(vec) -> fn(pos) -> fn(val) ->
-        Vector.set(vec, pos, val)
+      "address->": fn({:vector, pid} = vector) -> fn(pos) -> fn(val) ->
+        Agent.update(
+          pid,
+          fn(tuple) -> put_elem(tuple, pos, val) end
+        )
+        vector
       end end end,
 
-      "<-address": fn(vec) -> fn(pos) ->
-        Vector.get(vec, pos)
+      "<-address": fn({:vector, pid}) -> fn(pos) ->
+        Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
       end end,
 
       "absvector?": fn(arg) ->
-        match?({:array, _}, arg)
+        if match?({:vector, _}, arg) do
+          is_pid(elem(arg, 1))
+        else
+          false
+        end
       end,
 
       ############################ CONSES #####################################
