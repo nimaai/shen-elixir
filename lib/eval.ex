@@ -82,6 +82,19 @@ defmodule Klambda.Eval do
     eval(arg1) or eval(arg2)
   end
 
+  ##################### ERROR HANDLING #####################################
+
+  def eval([:"trap-error", body, handler]) do
+    evaled_body = eval_or_simple_error(body)
+    evaled_handler = eval(handler)
+    eval([[[:"trap-error"], evaled_body], evaled_handler])
+  end
+
+  def eval([:"trap-error", body]) do
+    evaled_body = eval_or_simple_error(body)
+    eval([[:"trap-error"], evaled_body])
+  end
+
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
   def eval([f]) when is_atom(f) do
@@ -134,7 +147,6 @@ defmodule Klambda.Eval do
     # eval [[[f], arg1], arg2] ... or
     # eval [[[lambda x [lambda y ...]], arg1] arg2]
 
-    # if (not match?([:lambda | _], f)), do: IO.inspect([f | args])
     f_expr = if match?([:lambda | _], f), do: f, else: [f]
     eval(
       Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
@@ -145,5 +157,15 @@ defmodule Klambda.Eval do
 
   def eval(term) do
     term
+  end
+
+  ##########################################################################
+
+  defp eval_or_simple_error(expr) do
+    try do
+      eval(expr)
+    catch
+      {:"simple-error", _message} = simple_error -> simple_error
+    end
   end
 end

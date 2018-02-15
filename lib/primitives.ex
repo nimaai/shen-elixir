@@ -19,10 +19,10 @@ defmodule Klambda.Primitives do
       ##################### ERROR HANDLING ###########################
 
       "trap-error": fn(body) -> fn(handler) ->
-        try do
+        if match?({:"simple-error", _}, body) do
+          Eval.eval([handler, body])
+        else
           body
-        catch
-          {:"simple-error", _message} -> Eval.eval([handler, body])
         end
       end end,
 
@@ -91,6 +91,7 @@ defmodule Klambda.Primitives do
           is_bitstring(arg) -> "\"" <> arg <> "\""
           match?([:lambda | _], arg) -> "<lambda>"
           match?([_ | _], arg) -> "<continuation>"
+          match?({:vector, _, _}, arg) -> "<vector>"
           true -> to_string(arg)
         end
       end,
@@ -114,12 +115,13 @@ defmodule Klambda.Primitives do
       ############################ ARRAYS #####################################
 
       absvector: fn(size) ->
+        # TODO: raise error if size negative or exceeds platform
         tuple = Tuple.duplicate(:nil, size)
         {:ok, pid} = Agent.start_link(fn -> tuple end)
-        {:vector, pid}
+        {:vector, size, pid}
       end,
 
-      "address->": fn({:vector, pid} = vector) -> fn(pos) -> fn(val) ->
+      "address->": fn({:vector, _, pid} = vector) -> fn(pos) -> fn(val) ->
         Agent.update(
           pid,
           fn(tuple) -> put_elem(tuple, pos, val) end
@@ -127,12 +129,16 @@ defmodule Klambda.Primitives do
         vector
       end end end,
 
-      "<-address": fn({:vector, pid}) -> fn(pos) ->
-        Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
+      "<-address": fn({:vector, size, pid}) -> fn(pos) ->
+        if (pos + 1) <= size do
+          Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
+        else
+          throw {:"simple-error", "tuple index out of bounds"}
+        end
       end end,
 
       "absvector?": fn(arg) ->
-        if match?({:vector, _}, arg) do
+        if match?({:vector, _, _}, arg) do
           is_pid(elem(arg, 1))
         else
           false

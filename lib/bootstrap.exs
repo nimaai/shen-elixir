@@ -27,7 +27,7 @@ defmodule Shen.Bootstrap do
   end
 
   def eval_form(form) do
-    # if (String.starts_with?(form, "(shen.initialise_arity_table")) do
+    # if (String.starts_with?(form, "(defun shen.set-lambda-form-entry")) do
     #   :dbg.tracer()
     #   :dbg.p(:all, :c)
     #   :dbg.tpl(Klambda.Eval, :eval, 1, :x)
