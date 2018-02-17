@@ -87,6 +87,7 @@ Env.init
 # :dbg.tracer()
 # :dbg.p(:all, :c)
 # :dbg.tp(Klambda.Eval, :eval, 1, :x)
+start_time = DateTime.utc_now |> DateTime.to_unix
 Enum.each(
   [
     "toplevel.kl",
@@ -109,4 +110,6 @@ Enum.each(
     Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}")
   end
 )
+end_time = DateTime.utc_now |> DateTime.to_unix
+IO.puts("loaded in #{end_time - start_time} seconds")
 Eval.eval([:"shen.shen"])
