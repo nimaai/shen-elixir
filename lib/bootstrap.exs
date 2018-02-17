@@ -1,4 +1,5 @@
 alias Klambda.Env
+alias Klambda.Eval
 
 defmodule Shen.Bootstrap do
   alias Klambda.Reader
@@ -34,7 +35,6 @@ defmodule Shen.Bootstrap do
     # end
 
     form
-    # |> IO.inspect
     |> Reader.tokenise
     |> Reader.read
     |> hd
@@ -109,3 +109,4 @@ Enum.each(
     Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}")
   end
 )
+Eval.eval([:"shen.shen"])

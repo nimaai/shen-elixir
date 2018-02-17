@@ -1,7 +1,6 @@
 defmodule Klambda.Eval do
   alias Klambda.Lambda
   alias Klambda.Env
-  alias Klambda.Primitives
   require IEx
   require Integer
 
@@ -98,27 +97,30 @@ defmodule Klambda.Eval do
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
   def eval([f]) when is_atom(f) do
-    if Map.has_key?(Primitives.mapping(), f) do
-      Primitives.mapping()[f]
-    else
-      func = Env.lookup_function(f)
-      case func do
-        [:lambda, _id, nil, body] -> eval(body)
-        _ -> func
-      end
+    func = Env.lookup_function(f)
+    cond do
+      is_function(func) -> func
+      match?([:lambda, _id, nil, _body], func) ->
+        [_, _, _, body] = func
+        eval(body)
+      true -> func
     end
   end
 
   def eval([[:lambda, _id, nil, body]]) do
-    eval body
+    eval(body)
   end
 
-  def eval([_] = f) do
+  def eval([_]) do
     throw {:error, "Illegal function call"}
   end
 
-  def eval(f) when is_function(f) do
-    f.()
+  def eval([f, arg]) when is_function(f) do
+    f.(arg)
+  end
+
+  def eval([f, arg]) when is_atom(f) do
+    eval [Env.lookup_function(f), eval(arg)]
   end
 
   def eval([[:lambda, var, body], arg]) do
@@ -130,17 +132,7 @@ defmodule Klambda.Eval do
   end
 
   def eval([[_ | _] = f, arg]) do
-    evaled_f = eval(f)
-    evaled_arg = eval(arg)
-
-    cond do
-      is_function(evaled_f) -> evaled_f.(evaled_arg)
-      [:lambda | _] = evaled_f -> eval [evaled_f, evaled_arg]
-      Map.has_key?(Primitives.mapping(), evaled_f) ->
-        func = Primitives.mapping()[evaled_f]
-        func.(evaled_arg)
-      true -> eval [Env.lookup_function(evaled_f), eval(evaled_arg)]
-    end
+    eval [eval(f), eval(arg)]
   end
 
   def eval([f | args]) do

@@ -2,6 +2,7 @@ defmodule Klambda.Primitives do
   alias Klambda.Env
   alias Klambda.Eval
   alias Klambda.Equality
+  alias Klambda.Print
   require IEx
 
   def mapping do
@@ -68,7 +69,7 @@ defmodule Klambda.Primitives do
       pos: fn(arg) -> fn(n) ->
         unit = String.at(arg, n)
         if is_nil(unit) do
-          throw {:error, "String index is out bounds"}
+          throw {:"simple-error", "String index is out bounds"}
         else
           unit
         end
@@ -76,7 +77,7 @@ defmodule Klambda.Primitives do
 
       tlstr: fn(arg) ->
         if String.length(arg) == 0 do
-          throw {:error, "Argument is empty string"}
+          throw {:"simple-error", "Argument is empty string"}
         else
           {_, tlstr} = String.split_at(arg, 1)
           tlstr
@@ -89,17 +90,19 @@ defmodule Klambda.Primitives do
       str: fn(arg) ->
         cond do
           is_bitstring(arg) -> "\"" <> arg <> "\""
-          match?([:lambda | _], arg) -> "<lambda>"
-          match?([_ | _], arg) -> "<continuation>"
-          match?({:vector, _, _}, arg) -> "<vector>"
-          match?({:cons, [_ | _]}, arg) -> inspect(elem(arg, 1))
-          true -> to_string(arg)
+          is_number(arg) -> to_string(arg)
+          is_atom(arg) -> to_string(arg)
+          is_function(arg) -> inspect(arg)
+          is_pid(arg) -> inspect(arg)
+          match?([:lambda | _], arg) -> Print.print(arg)
+          match?({:vector, _, _}, arg) -> Print.print(arg)
+          true -> throw {:"simple-error", "argument cannot be converted to string"}
         end
       end,
 
       "string->n": fn(arg) ->
         if String.length(arg) == 0 do
-          throw {:error, "Argument is empty string"}
+          throw {:"simple-error", "Argument is empty string"}
         else
           List.first(String.to_charlist(arg))
         end
@@ -109,7 +112,7 @@ defmodule Klambda.Primitives do
         if String.valid? <<arg>> do
            <<arg>>
         else
-          throw {:error, "Not a valid codepoint"}
+          throw {:"simple-error", "Not a valid codepoint"}
         end
       end,
 
@@ -204,7 +207,8 @@ defmodule Klambda.Primitives do
       end end,
 
       "eval-kl": fn(kl_expr) ->
-        Eval.eval kl_expr
+        lst = cons_to_list(kl_expr)
+        Eval.eval(lst)
       end,
 
       ######################### INFORMATIONAL #################################
@@ -214,7 +218,7 @@ defmodule Klambda.Primitives do
         case arg do
           :unix -> now
           :run -> now - Agent.get(:env, fn state -> state[:start_time] end)
-          _ -> throw {:error, "invalid symbol for get-time"}
+          _ -> throw {:"simple-error", "invalid symbol for get-time"}
         end
       end,
 
@@ -224,4 +228,10 @@ defmodule Klambda.Primitives do
 
     }
   end
+
+  def cons_to_list({:cons, []}), do: []
+  def cons_to_list({:cons, [fst | rest]}) do
+    [cons_to_list(fst) | cons_to_list(rest)]
+  end
+  def cons_to_list(el), do: el
 end

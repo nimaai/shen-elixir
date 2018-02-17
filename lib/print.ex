@@ -34,7 +34,7 @@ defmodule Klambda.Print do
     inspect([])
   end
 
-  def print({:vector, pid}) do
+  def print({:vector, _size, pid}) do
     t = Agent.get(pid, fn(tuple) -> tuple end)
     inspect(t)
   end
