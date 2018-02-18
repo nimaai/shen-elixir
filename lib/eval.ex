@@ -1,6 +1,7 @@
 defmodule Klambda.Eval do
   alias Klambda.Lambda
   alias Klambda.Env
+  import Klambda.Curry
   require IEx
   require Integer
 
@@ -96,53 +97,29 @@ defmodule Klambda.Eval do
 
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
-  def eval([f]) when is_atom(f) do
-    func = Env.lookup_function(f)
-    cond do
-      is_function(func) -> func
-      match?([:lambda, _id, nil, _body], func) ->
-        [_, _, _, body] = func
-        eval(body)
-      true -> func
+  def eval([f | args]) when is_atom(f) do
+    {_, func} = Env.lookup_function(f)
+    {_, arity} = :erlang.fun_info(func, :arity)
+
+    if length(args) == arity do
+      apply(func, map_eval(args))
+    else
+      func
+      |> curry
+      |> partially_apply(map_eval(args))
     end
   end
 
-  def eval([[:lambda, _id, nil, body]]) do
-    eval(body)
+  def eval([f | args]) when is_function(f) do
+    partially_apply(f, map_eval(args))
   end
 
-  def eval([_]) do
-    throw {:error, "Illegal function call"}
+  def eval([[_ | _] = f | args]) do
+    eval([eval(f) | map_eval(args)])
   end
 
-  def eval([f, arg]) when is_function(f) do
-    f.(arg)
-  end
-
-  def eval([f, arg]) when is_atom(f) do
-    eval [Env.lookup_function(f), eval(arg)]
-  end
-
-  def eval([[:lambda, var, body], arg]) do
-    eval [Lambda.create(var, body), arg]
-  end
-
-  def eval([[:lambda, _id, param, _] = lambda, arg]) do
-    eval Lambda.beta_reduce(lambda, param, eval(arg))
-  end
-
-  def eval([[_ | _] = f, arg]) do
-    eval [eval(f), eval(arg)]
-  end
-
-  def eval([f | args]) do
-    # eval [[[f], arg1], arg2] ... or
-    # eval [[[lambda x [lambda y ...]], arg1] arg2]
-
-    f_expr = if match?([:lambda | _], f), do: f, else: [f]
-    eval(
-      Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
-    )
+  def partially_apply(f, args) do
+    Enum.reduce(args, f, fn(arg, new_f) -> new_f.(arg) end)
   end
 
   ##########################################################################
@@ -160,4 +137,6 @@ defmodule Klambda.Eval do
       {:"simple-error", _message} = simple_error -> simple_error
     end
   end
+
+  defp map_eval(args), do: Enum.map(args, &eval/1)
 end

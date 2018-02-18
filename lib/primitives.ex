@@ -9,223 +9,266 @@ defmodule Klambda.Primitives do
     %{
       ##################### CONDITIONALS #############################
 
-      and: fn(x) -> fn(y) -> x and y end end,
+      and: {2,
+        fn(x, y) -> x and y end
+      },
 
-      or: fn(x) -> fn(y) -> x or y end end,
+      or: {2,
+        fn(x, y) -> x or y end
+      },
 
-      if: fn(condition) -> fn(consequent) -> fn(alternative) ->
-        if condition, do: consequent, else: alternative
-      end end end,
+      if: {3,
+        fn(condition, consequent, alternative) ->
+          if condition, do: consequent, else: alternative
+        end
+      },
 
       ##################### ERROR HANDLING ###########################
 
-      "trap-error": fn(body) -> fn(handler) ->
-        if match?({:"simple-error", _}, body) do
-          Eval.eval([handler, body])
-        else
-          body
+      "trap-error": {2,
+        fn(body, handler) ->
+          if match?({:"simple-error", _}, body) do
+            Eval.eval([handler, body])
+          else
+            body
+          end
         end
-      end end,
+      },
 
-      "simple-error": fn(message) -> throw {:"simple-error", message} end,
+      "simple-error": {1,
+        fn(message) -> throw {:"simple-error", message} end
+      },
 
-      "error-to-string": fn({:"simple-error", message}) -> message end,
+      "error-to-string": {1,
+        fn({:"simple-error", message}) -> message end
+      },
 
       ######################### SYMBOLS ##############################
 
-      intern: fn(name) -> String.to_atom(name) end,
+      intern: {1,
+        fn(name) -> String.to_atom(name) end
+      },
 
-      set: fn(sym) -> fn(val) ->
-        :ok = Env.define_global(sym, val)
-        val
-      end end,
+      set: {2,
+        fn(sym, val) ->
+          :ok = Env.define_global(sym, val)
+          val
+        end
+      },
 
-      value: fn(sym) -> Env.lookup_global(sym) end,
+      value: {2,
+        fn(sym) -> Env.lookup_global(sym) end
+      },
 
       ######################### NUMERICS #############################
 
-      number?: &is_number/1,
+      number?: {1, &is_number/1},
 
-      +: fn(x) -> fn(y) -> x + y end end,
+      +: {2, &+/2},
 
-      -: fn(x) -> fn(y) -> x - y end end,
+      -: {2, &-/2},
 
-      *: fn(x) -> fn(y) -> x * y end end,
+      *: {2, &*/2},
 
-      /: fn(x) -> fn(y) -> x / y end end,
+      /: {2, &//2},
 
-      >: fn(x) -> fn(y) -> x > y end end,
+      >: {2, &>/2},
 
-      <: fn(x) -> fn(y) -> x < y end end,
+      <: {2, &</2},
 
-      >=: fn(x) -> fn(y) -> x >= y end end,
+      >=: {2, &>=/2},
 
-      <=: fn(x) -> fn(y) -> x <= y end end,
+      <=: {2, &<=/2},
 
       ######################### STRINGS ##############################
 
-      "string?": fn(arg) -> is_bitstring(arg) end,
+      "string?": {1, &is_bitstring/1},
 
-      pos: fn(arg) -> fn(n) ->
-        unit = String.at(arg, n)
-        if is_nil(unit) do
-          throw {:"simple-error", "String index is out bounds"}
-        else
-          unit
+      pos: {2,
+        fn(arg, n) ->
+          unit = String.at(arg, n)
+          if is_nil(unit) do
+            throw {:"simple-error", "String index is out bounds"}
+          else
+            unit
+          end
         end
-      end end,
+      },
 
-      tlstr: fn(arg) ->
-        if String.length(arg) == 0 do
-          throw {:"simple-error", "Argument is empty string"}
-        else
-          {_, tlstr} = String.split_at(arg, 1)
-          tlstr
+      tlstr: {1,
+        fn(arg) ->
+          if String.length(arg) == 0 do
+            throw {:"simple-error", "Argument is empty string"}
+          else
+            {_, tlstr} = String.split_at(arg, 1)
+            tlstr
+          end
         end
-      end,
+      },
 
-      cn: fn(s1) -> fn(s2) -> s1 <> s2 end end,
+      cn: {2, &<>/2},
 
-      # TODO: fix the cases
-      str: fn(arg) ->
-        cond do
-          is_bitstring(arg) -> "\"" <> arg <> "\""
-          is_number(arg) -> to_string(arg)
-          is_atom(arg) -> to_string(arg)
-          is_function(arg) -> inspect(arg)
-          is_pid(arg) -> inspect(arg)
-          match?([:lambda | _], arg) -> Print.print(arg)
-          match?({:vector, _, _}, arg) -> Print.print(arg)
-          true -> throw {:"simple-error", "argument cannot be converted to string"}
+      str: {1,
+        fn(arg) ->
+          cond do
+            is_bitstring(arg) -> "\"" <> arg <> "\""
+            is_number(arg) -> to_string(arg)
+            is_atom(arg) -> to_string(arg)
+            is_function(arg) -> inspect(arg)
+            is_pid(arg) -> inspect(arg)
+            match?([:lambda | _], arg) -> Print.print(arg)
+            match?({:vector, _, _}, arg) -> Print.print(arg)
+            true -> throw {:"simple-error", "argument cannot be converted to string"}
+          end
         end
-      end,
+      },
 
-      "string->n": fn(arg) ->
-        if String.length(arg) == 0 do
-          throw {:"simple-error", "Argument is empty string"}
-        else
-          List.first(String.to_charlist(arg))
+      "string->n": {1,
+        fn(arg) ->
+          if String.length(arg) == 0 do
+            throw {:"simple-error", "Argument is empty string"}
+          else
+            List.first(String.to_charlist(arg))
+          end
         end
-      end,
+      },
 
-      "n->string": fn(arg) ->
-        if String.valid? <<arg>> do
-           <<arg>>
-        else
-          throw {:"simple-error", "Not a valid codepoint"}
+      "n->string": {1,
+        fn(arg) ->
+          if String.valid? <<arg>> do
+            <<arg>>
+          else
+            throw {:"simple-error", "Not a valid codepoint"}
+          end
         end
-      end,
+      },
 
       ############################ ARRAYS #####################################
 
-      absvector: fn(size) ->
-        # TODO: raise error if size negative or exceeds platform
-        tuple = Tuple.duplicate(:nil, size)
-        {:ok, pid} = Agent.start_link(fn -> tuple end)
-        {:vector, size, pid}
-      end,
-
-      "address->": fn({:vector, _, pid} = vector) -> fn(pos) -> fn(val) ->
-        Agent.update(
-          pid,
-          fn(tuple) -> put_elem(tuple, pos, val) end
-        )
-        vector
-      end end end,
-
-      "<-address": fn({:vector, size, pid}) -> fn(pos) ->
-        if (pos + 1) <= size do
-          Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
-        else
-          throw {:"simple-error", "tuple index out of bounds"}
+      absvector: {1,
+        fn(size) ->
+          # TODO: raise error if size negative or exceeds platform
+          tuple = Tuple.duplicate(:nil, size)
+          {:ok, pid} = Agent.start_link(fn -> tuple end)
+            {:vector, size, pid}
         end
-      end end,
+      },
 
-      "absvector?": fn(arg) ->
-        if match?({:vector, _, _}, arg) do
-          is_pid(elem(arg, 1))
-        else
-          false
+      "address->": {3,
+        fn({:vector, _, pid} = vector, pos, val) ->
+          Agent.update(
+            pid,
+            fn(tuple) -> put_elem(tuple, pos, val) end
+          )
+          vector
         end
-      end,
+      },
+
+      "<-address": {2,
+        fn({:vector, size, pid}, pos) ->
+          if (pos + 1) <= size do
+            Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
+          else
+            throw {:"simple-error", "tuple index out of bounds"}
+          end
+        end
+      },
+
+      "absvector?": {1,
+        fn(arg) ->
+          if match?({:vector, _, _}, arg) do
+            is_pid(elem(arg, 1))
+          else
+            false
+          end
+        end
+      },
 
       ############################ CONSES #####################################
 
-      "cons?": fn(arg) ->
-        match?({:cons, [_ | _]}, arg)
-      end,
+      "cons?": {1,
+        fn(arg) -> match?({:cons, [_ | _]}, arg) end
+      },
 
-      cons: fn(head) -> fn(tail) ->
-        {:cons, [head | tail]}
-      end end,
+      cons: {2,
+        fn(head, tail) -> {:cons, [head | tail]} end
+      },
 
-      hd: fn({:cons, [head | _]}) ->
-        head
-      end,
+      hd: {1,
+        fn({:cons, [head | _]}) -> head end
+      },
 
-      tl: fn({:cons, [_ | tail]}) ->
-        tail
-      end,
+      tl: {1,
+        fn({:cons, [_ | tail]}) -> tail end
+      },
 
       ############################ STREAMS ####################################
 
-      "write-byte": fn(num) -> fn(stream) ->
-        # TODO: raise error if stream closed or on in out mode
-        :ok = IO.binwrite( stream, to_string(<<num>>) )
-        num
-      end end,
-
-      "read-byte": fn(stream) ->
-        # TODO: raise error if stream closed or on in in mode
-        char = IO.binread( stream, 1 )
-        <<num, _>> = char <> <<0>>
-        case num do
-          :oef -> -1
-          _ -> num
+      "write-byte": {2,
+        fn(num, stream) ->
+          # TODO: raise error if stream closed or on in out mode
+          :ok = IO.binwrite( stream, to_string(<<num>>) )
+          num
         end
-      end,
+      },
 
-      open: fn(path) -> fn(mode) ->
-        m = case mode do
-          :in -> :read
-          :out -> :write
-          _ -> {:"simple-error", "invalid mode"}
+      "read-byte": {1,
+        fn(stream) ->
+          # TODO: raise error if stream closed or on in in mode
+          char = IO.binread( stream, 1 )
+          <<num, _>> = char <> <<0>>
+          case num do
+            :oef -> -1
+            _ -> num
+          end
         end
-        {:ok, pid} = File.open( path, [m] )
-        pid
-      end end,
+      },
 
-      close: fn(stream) ->
-        true = Process.exit( stream, :kill )
-        []
-      end,
+      open: {2,
+        fn(path, mode) ->
+          m = case mode do
+            :in -> :read
+            :out -> :write
+            _ -> {:"simple-error", "invalid mode"}
+          end
+          {:ok, pid} = File.open( path, [m] )
+          pid
+        end
+      },
+
+      close: {1,
+        fn(stream) ->
+          true = Process.exit( stream, :kill )
+          []
+        end
+      },
 
       ############################ GENERAL ####################################
 
-      "=": fn(arg1) -> fn(arg2) ->
-        Equality.equal?(arg1, arg2)
-      end end,
+      "=": {2, &Equality.equal?/2},
 
-      "eval-kl": fn(kl_expr) ->
-        lst = cons_to_list(kl_expr)
-        Eval.eval(lst)
-      end,
+      "eval-kl": {1,
+        fn(kl_expr) ->
+          kl_expr |> cons_to_list |> Eval.eval
+        end
+      },
 
       ######################### INFORMATIONAL #################################
 
-      "get-time": fn(arg) ->
-        now = DateTime.utc_now() |> DateTime.to_unix()
-        case arg do
-          :unix -> now
-          :run -> now - Agent.get(:env, fn state -> state[:start_time] end)
-          _ -> throw {:"simple-error", "invalid symbol for get-time"}
+      "get-time": {1,
+        fn(arg) ->
+          now = DateTime.utc_now() |> DateTime.to_unix()
+          case arg do
+            :unix -> now
+            :run -> now - Agent.get(:env, fn state -> state[:start_time] end)
+            _ -> throw {:"simple-error", "invalid symbol for get-time"}
+          end
         end
-      end,
+      },
 
-      type: fn(arg) -> fn(_sym) ->
-        Eval.eval(arg)
-      end end
-
+      type: {2,
+        fn(arg, _sym) -> Eval.eval(arg) end
+      }
     }
   end
 
