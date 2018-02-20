@@ -10,22 +10,12 @@ defmodule Klambda.Eval do
 
   ##################### FUNCTIONS AND BINDINGS ###################
 
-  def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
-    bbody =
-      if match?([], params) do
-        Lambda.create(nil, body)
-      else
-        [fst | rest] = Enum.reverse(params)
-        Enum.reduce(
-          rest,
-          Lambda.create(fst, body),
-          fn(param, lambda_acc) ->
-            Lambda.create(param, lambda_acc)
-          end
-        )
-      end
-    :ok = Env.define_function(fn_name, bbody)
-    fn_name
+  def eval([:defun, f, [], body]) do
+    :ok = Env.define_function(f, fn -> eval(body) end)
+    f
+  end
+
+  def eval([:defun, f, ps, body]) when is_atom(f) do
   end
 
   def eval([:lambda, param, body]) do
@@ -97,25 +87,24 @@ defmodule Klambda.Eval do
 
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
-  def eval([f]) when is_function(f) do
-    {_, arity} = :erlang.fun_info(f, :arity)
-    f.()
-  end
-
   def eval([f | args]) when is_atom(f) do
-    Env.lookup_function(f) |> partially_apply(map_eval(args))
-  end
-
-  def eval([f | args]) when is_function(f) do
-    partially_apply(f, map_eval(args))
+    fn_obj = Env.lookup_function(f)
+    {_, arity} = :erlang.fun_info(fn_obj, :arity)
+    if arity == length(args) do
+      apply(fn_obj, args)
+    else
+      partially_apply(fn_obj, map_eval(args))
+    end
   end
 
   def eval([[_ | _] = f | args]) do
     eval([eval(f) | map_eval(args)])
   end
 
-  def partially_apply(f, args) do
-    Enum.reduce(args, f, fn(arg, new_f) -> new_f.(arg) end)
+  def partially_apply(fn_obj, args) do
+    Enum.reduce(args,
+                fn_obj,
+                fn(arg, fn_obj_acc) -> fn_obj_acc.(arg) end)
   end
 
   ##########################################################################
@@ -136,14 +125,14 @@ defmodule Klambda.Eval do
 
   defp map_eval(args), do: Enum.map(args, &eval/1)
 
-  def beta_reduce(psvs, body) do
-    [{p1, v1} | r] = Enum.reverse(psvs)
-    Enum.reduce(r,
-                beta_reduce_once(body, p1, v1),
-                fn({p, v}, form) -> beta_reduce_once(form, p, v) end)
-  end
+  # def beta_reduce(psvs, body) do
+  #   [{p1, v1} | r] = Enum.reverse(psvs)
+  #   Enum.reduce(r,
+  #               beta_reduce_once(body, p1, v1),
+  #               fn({p, v}, form) -> beta_reduce_once(form, p, v) end)
+  # end
 
-  def beta_reduce_once(body, p, v) do
+  def beta_reduce(body, p, v) do
     Lambda.beta_reduce([:lambda, p, body], p, v)
   end
 end
