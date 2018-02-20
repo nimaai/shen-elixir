@@ -16,6 +16,25 @@ defmodule Klambda.Eval do
   end
 
   def eval([:defun, f, ps, body]) when is_atom(f) do
+    v_vars = [:v1, :v2] |> Enum.map(&(Macro.var &1, __MODULE__))
+
+    q = quote do
+      fn(unquote_splicing(v_vars)) ->
+        eval beta_reduce(
+          unquote(Enum.zip(ps, v_vars)),
+          var!(body)
+        )
+      end
+    end
+
+    {fn_obj, _} =
+      Code.eval_quoted(q,
+                       [body: body],
+                       functions: [{__MODULE__, [{:beta_reduce, 2},
+                                                 {:eval, 1}]}])
+
+    :ok = Env.define_function(f, fn_obj)
+    f
   end
 
   def eval([:lambda, param, body]) do
@@ -89,11 +108,15 @@ defmodule Klambda.Eval do
 
   def eval([f | args]) when is_atom(f) do
     fn_obj = Env.lookup_function(f)
-    {_, arity} = :erlang.fun_info(fn_obj, :arity)
+    eval([fn_obj | args])
+  end
+
+  def eval([f | args]) when is_function(f) do
+    {_, arity} = :erlang.fun_info(f, :arity)
     if arity == length(args) do
-      apply(fn_obj, args)
+      apply(f, args)
     else
-      partially_apply(fn_obj, map_eval(args))
+      partially_apply(curry(f), map_eval(args))
     end
   end
 
@@ -101,10 +124,8 @@ defmodule Klambda.Eval do
     eval([eval(f) | map_eval(args)])
   end
 
-  def partially_apply(fn_obj, args) do
-    Enum.reduce(args,
-                fn_obj,
-                fn(arg, fn_obj_acc) -> fn_obj_acc.(arg) end)
+  def partially_apply(f, args) do
+    Enum.reduce(args, f, fn(arg, f) -> f.(arg) end)
   end
 
   ##########################################################################
@@ -125,14 +146,14 @@ defmodule Klambda.Eval do
 
   defp map_eval(args), do: Enum.map(args, &eval/1)
 
-  # def beta_reduce(psvs, body) do
-  #   [{p1, v1} | r] = Enum.reverse(psvs)
-  #   Enum.reduce(r,
-  #               beta_reduce_once(body, p1, v1),
-  #               fn({p, v}, form) -> beta_reduce_once(form, p, v) end)
-  # end
+  def beta_reduce(psvs, body) do
+    [{p1, v1} | r] = Enum.reverse(psvs)
+    Enum.reduce(r,
+                beta_reduce_once(body, p1, v1),
+                fn({p, v}, form) -> beta_reduce_once(form, p, v) end)
+  end
 
-  def beta_reduce(body, p, v) do
+  def beta_reduce_once(body, p, v) do
     Lambda.beta_reduce([:lambda, p, body], p, v)
   end
 end
