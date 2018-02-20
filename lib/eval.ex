@@ -97,17 +97,13 @@ defmodule Klambda.Eval do
 
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
-  def eval([f | args]) when is_atom(f) do
-    {_, func} = Env.lookup_function(f)
-    {_, arity} = :erlang.fun_info(func, :arity)
+  def eval([f]) when is_function(f) do
+    {_, arity} = :erlang.fun_info(f, :arity)
+    f.()
+  end
 
-    if length(args) == arity do
-      apply(func, map_eval(args))
-    else
-      func
-      |> curry
-      |> partially_apply(map_eval(args))
-    end
+  def eval([f | args]) when is_atom(f) do
+    Env.lookup_function(f) |> partially_apply(map_eval(args))
   end
 
   def eval([f | args]) when is_function(f) do
@@ -139,4 +135,15 @@ defmodule Klambda.Eval do
   end
 
   defp map_eval(args), do: Enum.map(args, &eval/1)
+
+  def beta_reduce(psvs, body) do
+    [{p1, v1} | r] = Enum.reverse(psvs)
+    Enum.reduce(r,
+                beta_reduce_once(body, p1, v1),
+                fn({p, v}, form) -> beta_reduce_once(form, p, v) end)
+  end
+
+  def beta_reduce_once(body, p, v) do
+    Lambda.beta_reduce([:lambda, p, body], p, v)
+  end
 end
