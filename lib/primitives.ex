@@ -213,8 +213,8 @@ defmodule Klambda.Primitives do
     }
 
     m
-    # |> Enum.map(fn({name, func}) -> {name, curry(func)} end)
-    # |> Enum.into(%{})
+    |> Enum.map(fn({name, func}) -> {name, curry(func)} end)
+    |> Enum.into(%{})
   end
 
   def cons_to_list({:cons, []}), do: []

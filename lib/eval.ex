@@ -16,7 +16,7 @@ defmodule Klambda.Eval do
   end
 
   def eval([:defun, f, ps, body]) when is_atom(f) do
-    v_vars = [:v1, :v2] |> Enum.map(&(Macro.var &1, __MODULE__))
+    v_vars = Macro.generate_arguments(length(ps), __MODULE__)
 
     q = quote do
       fn(unquote_splicing(v_vars)) ->
@@ -33,7 +33,7 @@ defmodule Klambda.Eval do
                        functions: [{__MODULE__, [{:beta_reduce, 2},
                                                  {:eval, 1}]}])
 
-    :ok = Env.define_function(f, fn_obj)
+    :ok = Env.define_function(f, curry(fn_obj))
     f
   end
 
@@ -107,17 +107,11 @@ defmodule Klambda.Eval do
   ###################### FUNCTION APPLICATION (PARTIAL) ####################
 
   def eval([f | args]) when is_atom(f) do
-    fn_obj = Env.lookup_function(f)
-    eval([fn_obj | args])
+    eval([Env.lookup_function(f) | args])
   end
 
   def eval([f | args]) when is_function(f) do
-    {_, arity} = :erlang.fun_info(f, :arity)
-    if arity == length(args) do
-      apply(f, args)
-    else
-      partially_apply(curry(f), map_eval(args))
-    end
+    partially_apply(f, map_eval(args))
   end
 
   def eval([[_ | _] = f | args]) do
