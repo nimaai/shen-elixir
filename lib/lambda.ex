@@ -8,7 +8,7 @@ defmodule Klambda.Lambda do
      body]
   end
 
-  def beta_reduce([:lambda, _id, param, body], param, val) do
+  def beta_reduce([:lambda, param, body], param, val) do
     beta_reduce_body(body, param, val)
   end
 
