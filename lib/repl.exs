@@ -33,7 +33,7 @@ defmodule Klambda.Repl do
 
   defp eval_catch(x) do
     try do
-      Eval.eval(hd(x))
+      Eval.eval(hd(x), %{})
     catch
       e -> e
     end
@@ -51,6 +51,6 @@ end
 
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tpl(Klambda.Eval, :eval, 1, :x)
+# :dbg.tpl(Klambda.Eval, :eval, 2, :x)
 Klambda.Env.init
 Klambda.Repl.repl
