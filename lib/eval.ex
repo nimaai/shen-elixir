@@ -1,39 +1,53 @@
 defmodule Klambda.Eval do
-  alias Klambda.Lambda
   alias Klambda.Env
-  import Klambda.Curry
   require IEx
   require Integer
 
-  # TODO: check eval args in function calls !
+  @type expr :: kl_atom | fun_app
+
+  @type kl_atom :: atom
+                 | String.t
+                 | number
+                 | boolean
+                 | pid
+                 | function
+
+  @type env :: map
+  @type simple_error :: {:"simple-error", String.t}
+  @type fun_app :: [operator | list(expr)]
+  @type operator :: atom | fun_app
+
   # TODO: raise error on arg type mismatch !
 
   ##################### FUNCTIONS AND BINDINGS ###################
 
-  def eval([:defun, f, [], body], _env) do
-    :ok = Env.define_function(f, fn -> eval(body) end)
+  @spec eval(expr, env) :: expr
+
+  def eval([:defun, f, [], body], %{}) do
+    :ok = Env.define_function(f, fn -> eval(body, %{}) end)
     f
   end
 
-  def eval([:defun, f, ps, body], env) do
-    [p | rest] = Enum.reverse(ps)
-    fn_obj =
-      Enum.reduce(rest,
-                  [:lambda, p, body],
-                  fn(p, form) -> [:lambda, p, form] end)
-      |> eval(env)
-    :ok = Env.define_function(f, fn_obj)
+  def eval([:defun, f, ps, body], %{}) do
+    :ok = Env.define_function(f, curry_defun(ps, body, %{}))
     f
   end
 
-  def eval([:freeze, expr]) do
-    Lambda.create(nil, expr)
+  def eval([:lambda, p, body], env) when is_atom(p) do
+    fn(v) -> eval(body, Map.put(env, p, v)) end
+  end
+
+  def eval([:let, p, v, body], env) do
+    eval(body, Map.put(env, p, v))
+  end
+
+  def eval([:freeze, expr], env) do
+    fn -> eval(expr, env) end
   end
 
   # NOTE: possible shen override
-  # def eval([:thaw, expr]) do
-  #   [:lambda, _id, nil, body] = eval(expr)
-  #   eval(body)
+  # def eval([:thaw, expr], env) do
+  #   eval(expr, env).()
   # end
 
   ##################### CONDITIONALS #############################
@@ -69,7 +83,7 @@ defmodule Klambda.Eval do
   def eval([:"trap-error", body, handler], env) do
     evaled_body = eval_or_simple_error(body, env)
     evaled_handler = eval(handler, env)
-    eval([[[:"trap-error"], evaled_body], evaled_handler])
+    eval([[[:"trap-error"], evaled_body], evaled_handler], env)
   end
 
   def eval([:"trap-error", body], env) do
@@ -77,41 +91,7 @@ defmodule Klambda.Eval do
     eval([[:"trap-error"], evaled_body], env)
   end
 
-  ###################### FUNCTION APPLICATION (PARTIAL) ####################
-
-  # def eval([f | args]) when is_atom(f) do
-  #   eval([Env.lookup_function(f) | args])
-  # end
-
-  # def eval([f | args]) when is_function(f) do
-  #   partially_apply(f, map_eval(args))
-  # end
-
-  # def eval([[:lambda, _, _] = f, arg]) do
-  #   eval([eval(f), eval(arg)])
-  # end
-
-  # def eval([[_ | _] = f | args]) do
-  #   eval([eval(f) | map_eval(args)])
-  # end
-
   ##########################################################################
-
-  # def eval(term) do
-  #   term
-  # end
-
-  ##########################################################################
-  ##########################################################################
-  ##########################################################################
-
-  def eval([:let, p, v, body], env) do
-    eval(body, Map.put(env, p, v))
-  end
-
-  def eval([:lambda, p, body], env) when is_atom(p) do
-    fn(v) -> eval(body, Map.put(env, p, v)) end
-  end
 
   def eval([[:lambda, _, _] = f, arg], env) do
     eval(f, env).(eval(arg, env))
@@ -139,9 +119,13 @@ defmodule Klambda.Eval do
 
   ##########################################################################
 
+  @spec partially_apply(function, list(kl_atom)) :: kl_atom
+
   def partially_apply(f, args) do
     Enum.reduce(args, f, fn(arg, f) -> f.(arg) end)
   end
+
+  @spec eval_or_simple_error(expr, env) :: kl_atom | simple_error
 
   def eval_or_simple_error(expr, env) do
     try do
@@ -151,15 +135,19 @@ defmodule Klambda.Eval do
     end
   end
 
+  @spec map_eval(list(expr), env) :: list(kl_atom)
+
   def map_eval(args, env) do
     Enum.map(args, fn(arg) -> eval(arg, env) end)
   end
 
-  # NOTE: why renaming this function breaks the macro???
-  def beta_reduce(psvs, body) do
-    [{p1, v1} | r] = Enum.reverse(psvs)
-    Enum.reduce(r,
-                Lambda.beta_reduce(body, p1, v1),
-                fn({p, v}, form) -> Lambda.beta_reduce(form, p, v) end)
+  @spec curry_defun(list(atom), expr, env) :: kl_atom | function
+
+  def curry_defun([], body, env) do
+    eval(body, env)
+  end
+
+  def curry_defun([p | r], body, env) do
+    fn(v) -> curry_defun(r, body, Map.put(env, p, v)) end
   end
 end

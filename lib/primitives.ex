@@ -22,7 +22,7 @@ defmodule Klambda.Primitives do
 
       "trap-error": fn(body, handler) ->
         if match?({:"simple-error", _}, body) do
-          Eval.eval([handler, body])
+          Eval.eval([handler, body], %{})
         else
           body
         end
@@ -172,7 +172,7 @@ defmodule Klambda.Primitives do
         char = IO.binread( stream, 1 )
         <<num, _>> = char <> <<0>>
         case num do
-          :oef -> -1
+          :eof -> -1
           _ -> num
         end
       end,
@@ -196,7 +196,7 @@ defmodule Klambda.Primitives do
 
       "=": &Equality.equal?/2,
 
-      "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> Eval.eval end,
+      "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> Eval.eval(%{}) end,
 
       ######################### INFORMATIONAL #################################
 
@@ -209,7 +209,7 @@ defmodule Klambda.Primitives do
         end
       end,
 
-      type: fn(arg, _sym) -> Eval.eval(arg) end
+      type: fn(arg, _sym) -> Eval.eval(arg, %{}) end
     }
 
     m
