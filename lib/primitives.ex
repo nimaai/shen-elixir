@@ -1,36 +1,58 @@
 defmodule Klambda.Primitives do
   alias Klambda.Env
-  alias Klambda.Eval
+  import Klambda.Eval, only: [eval: 2]
   alias Klambda.Equality
   alias Klambda.Print
+  alias Klambda.Types, as: T
+  alias Klambda.SimpleError
   import Klambda.Curry
   require IEx
 
+  ##################### CONDITIONALS #############################
+
+  @spec kl_and(boolean, boolean) :: boolean
+  def kl_and(x, y) do
+    x and y
+  end
+
+  @spec kl_or(boolean, boolean) :: boolean
+  def kl_or(x, y) do
+    x or y
+  end
+
+  @spec kl_if(boolean, T.kl_atom, T.kl_atom) :: T.kl_atom
+  def kl_if(x, y, z) do
+    if x, do: y, else: z
+  end
+
+  ##################### ERROR HANDLING ###########################
+
+  @spec trap_error(%SimpleError{} | T.kl_atom, fun) :: T.kl_atom
+  def trap_error(%SimpleError{} = x, f) do
+    f.(x)
+  end
+  def trap_error(x, _f) do
+    x
+  end
+
+  @spec simple_error(String.t) :: Exception.t
+  def simple_error(x) do
+    raise SimpleError, message: x
+  end
+
+  @spec error_to_string(%SimpleError{}) :: String.t
+  def error_to_string(%SimpleError{message: x}) do
+    x
+  end
+
   def mapping do
     m = %{
-      ##################### CONDITIONALS #############################
-
       and: &and/2,
-
       or: &or/2,
-
-      if: fn(condition, consequent, alternative) ->
-        if condition, do: consequent, else: alternative
-      end,
-
-      ##################### ERROR HANDLING ###########################
-
-      "trap-error": fn(body, handler) ->
-        if match?({:"simple-error", _}, body) do
-          Eval.eval([handler, body], %{})
-        else
-          body
-        end
-      end,
-
-      "simple-error": fn(message) -> throw {:"simple-error", message} end,
-
-      "error-to-string": fn({:"simple-error", message}) -> message end,
+      if: &kl_if/3,
+      "trap-error": &trap_error/2,
+      "simple-error": &simple_error/1,
+      "error-to-string": &error_to_string/1,
 
       ######################### SYMBOLS ##############################
 
@@ -196,7 +218,7 @@ defmodule Klambda.Primitives do
 
       "=": &Equality.equal?/2,
 
-      "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> Eval.eval(%{}) end,
+      "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> eval(%{}) end,
 
       ######################### INFORMATIONAL #################################
 
@@ -209,7 +231,7 @@ defmodule Klambda.Primitives do
         end
       end,
 
-      type: fn(arg, _sym) -> Eval.eval(arg, %{}) end
+      type: fn(arg, _sym) -> eval(arg, %{}) end
     }
 
     m
