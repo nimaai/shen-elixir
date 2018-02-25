@@ -23,8 +23,14 @@ defmodule KL.Primitives do
   @spec simple_error(String.t) :: Exception.t
   def simple_error(x), do: raise(x)
 
-  @spec error_to_string(Exception.t) :: String.t
-  def error_to_string(%RuntimeError{message: x}), do: x
+  @spec error_to_string(T.kl_atom) :: String.t
+  def error_to_string(x) do
+    if Exception.exception?(x) do
+      x.message
+    else
+      raise "#{x} is not an exception"
+    end
+  end
 
   @spec intern(String.t) :: atom
   def intern(x), do: String.to_atom(x)

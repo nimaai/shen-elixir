@@ -26,10 +26,10 @@ defmodule KL.Repl do
       |> eval_rescue
     end
 
-    if Exception.exception?(v) do
-      IO.puts Exception.format_banner(:error, v)
-    else
-      v |> Print.print |> IO.puts
+    cond do
+      match?(%RuntimeError{}, v) -> IO.puts(v.message)
+      Exception.exception?(v) -> Exception.format_banner(:error, v) |> IO.puts
+      true -> v |> Print.print |> IO.puts
     end
 
     repl(num + 1, [])
