@@ -1,7 +1,7 @@
-defmodule Klambda.Repl do
-  alias Klambda.Reader
-  alias Klambda.Eval
-  alias Klambda.Print
+defmodule KL.Repl do
+  alias KL.Reader
+  alias KL.Eval
+  alias KL.Print
   require IEx
 
   def repl(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
@@ -51,6 +51,6 @@ end
 
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tpl(Klambda.Eval, :eval, 2, :x)
-Klambda.Env.init
-Klambda.Repl.repl
+# :dbg.tpl(KL.Eval, :eval, 2, :x)
+KL.Env.init
+KL.Repl.repl

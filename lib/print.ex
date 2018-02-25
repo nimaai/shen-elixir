@@ -1,5 +1,5 @@
-defmodule Klambda.Print do
-  alias Klambda.Vector
+defmodule KL.Print do
+  alias KL.Vector
   require IEx
 
   def print({:"simple-error", message}) do

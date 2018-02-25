@@ -1,18 +1,17 @@
-defmodule Klambda.Eval do
-  alias Klambda.Env
-  alias Klambda.Types, as: T
-  alias Klambda.SimpleError
+defmodule KL.Eval do
+  alias KL.Env, as: E
+  alias KL.Types, as: T
   require IEx
   require Integer
 
   @spec eval(T.expr, T.env) :: T.expr
   def eval([:defun, f, [], b], %{}) do
-    :ok = Env.define_function(f, fn -> eval(b, %{}) end)
+    :ok = E.define_function(f, fn -> eval(b, %{}) end)
     f
   end
 
   def eval([:defun, f, ps, b], %{}) do
-    :ok = Env.define_function(f, curry_defun(ps, b, %{}))
+    :ok = E.define_function(f, curry_defun(ps, b, %{}))
     f
   end
 
@@ -55,7 +54,7 @@ defmodule Klambda.Eval do
     try do
       eval(x, e)
     rescue
-      ex in SimpleError -> eval(f, e).(ex)
+      ex in KL.Error -> eval(f, e).(ex)
     end
   end
 
@@ -64,7 +63,7 @@ defmodule Klambda.Eval do
   end
 
   def eval([f | xs], e) when is_atom(f) do
-    eval([Env.lookup_function(f) | xs], e)
+    eval([E.lookup_function(f) | xs], e)
   end
 
   def eval([f | xs], e) when is_function(f) do

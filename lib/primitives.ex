@@ -1,102 +1,105 @@
-defmodule Klambda.Primitives do
-  alias Klambda.Env
-  import Klambda.Eval, only: [eval: 2]
-  alias Klambda.Equality
-  alias Klambda.Print
-  alias Klambda.Types, as: T
-  alias Klambda.SimpleError
-  import Klambda.Curry
+defmodule KL.Primitives do
+  alias KL.Env, as: E
+  import KL.Eval, only: [eval: 2]
+  alias KL.Equality
+  alias KL.Print
+  alias KL.Types, as: T
+  import KL.Curry
   require IEx
 
-  ##################### CONDITIONALS #############################
-
   @spec kl_and(boolean, boolean) :: boolean
-  def kl_and(x, y) do
-    x and y
-  end
+  def kl_and(x, y) when is_boolean(x) and is_boolean(y), do: x and y
 
   @spec kl_or(boolean, boolean) :: boolean
-  def kl_or(x, y) do
-    x or y
-  end
+  def kl_or(x, y) when is_boolean(x) and is_boolean(y), do: x or y
 
   @spec kl_if(boolean, T.kl_atom, T.kl_atom) :: T.kl_atom
-  def kl_if(x, y, z) do
-    if x, do: y, else: z
-  end
+  def kl_if(x, y, z) when is_boolean(x), do: if x, do: y, else: z
 
-  ##################### ERROR HANDLING ###########################
-
-  @spec trap_error(%SimpleError{} | T.kl_atom, fun) :: T.kl_atom
-  def trap_error(%SimpleError{} = x, f) do
-    f.(x)
-  end
-  def trap_error(x, _f) do
-    x
-  end
+  @spec trap_error(%KL.Error{} | T.kl_atom, fun) :: T.kl_atom
+  def trap_error(%KL.Error{} = x, f), do: f.(x)
+  def trap_error(x, _f), do: x
 
   @spec simple_error(String.t) :: Exception.t
-  def simple_error(x) do
-    raise SimpleError, message: x
+  def simple_error(x), do: raise KL.Error, message: x
+
+  @spec error_to_string(%KL.Error{}) :: String.t
+  def error_to_string(%KL.Error{message: x}), do: x
+
+  @spec intern(String.t) :: atom
+  def intern(x), do: String.to_atom(x)
+
+  @spec set(atom, T.kl_atom) :: atom
+  def set(x, y) do
+    :ok = E.define_global(x, y)
+    x
   end
 
-  @spec error_to_string(%SimpleError{}) :: String.t
-  def error_to_string(%SimpleError{message: x}) do
-    x
+  @spec value(atom) :: T.kl_atom
+  def value(x), do: E.lookup_global(x)
+
+  @spec number?(T.kl_atom) :: boolean
+  def number?(x), do: is_number(x)
+
+  @spec add(number, number) :: number
+  def add(x, y), do: x + y
+
+  @spec subtract(number, number) :: number
+  def subtract(x, y), do: x - y
+
+  @spec multiply(number, number) :: number
+  def multiply(x, y), do: x * y
+
+  @spec divide(number, number) :: number
+  def divide(x, y), do: x / y
+
+  @spec greater_than(number, number) :: number
+  def greater_than(x, y), do: x > y
+
+  @spec less_than(number, number) :: number
+  def less_than(x, y), do: x < y
+
+  @spec greater_or_equal_than(number, number) :: number
+  def greater_or_equal_than(x, y), do: x >= y
+
+  @spec less_or_equal_than(number, number) :: number
+  def less_or_equal_than(x, y), do: x <= y
+
+  @spec string?(T.kl_atom) :: boolean
+  def string?(x), do: is_bitstring(x)
+
+  @spec pos(String.T, number) :: String.T
+  def pos(x, y) do
+    r = String.at(x, y)
+    if is_nil(r) do
+      throw {:"simple-error", "String index is out bounds"}
+    else
+      r
+    end
   end
 
   def mapping do
     m = %{
-      and: &and/2,
-      or: &or/2,
+      and: &kl_and/2,
+      or: &kl_or/2,
       if: &kl_if/3,
       "trap-error": &trap_error/2,
       "simple-error": &simple_error/1,
       "error-to-string": &error_to_string/1,
-
-      ######################### SYMBOLS ##############################
-
-      intern: &String.to_atom/1,
-
-      set: fn(sym, val) ->
-        :ok = Env.define_global(sym, val)
-        val
-      end,
-
-      value: &Env.lookup_global/1,
-
-      ######################### NUMERICS #############################
-
-      number?: &is_number/1,
-
-      +: &+/2,
-
-      -: &-/2,
-
-      *: &*/2,
-
-      /: (&//2),
-
-      >: &>/2,
-
-      <: &</2,
-
-      >=: &>=/2,
-
-      <=: &<=/2,
-
-      ######################### STRINGS ##############################
-
-      "string?": &is_bitstring/1,
-
-      pos: fn(arg, n) ->
-        unit = String.at(arg, n)
-        if is_nil(unit) do
-          throw {:"simple-error", "String index is out bounds"}
-        else
-          unit
-        end
-      end,
+      intern: &intern/1,
+      set: &set/2,
+      value: &value/1,
+      number?: &number?/1,
+      +: &add/2,
+      -: &subtract/2,
+      *: &multiply/2,
+      /: &divide/2,
+      >: &greater_than/2,
+      <: &less_than/2,
+      >=: &greater_or_equal_than/2,
+      <=: &less_or_equal_than/2,
+      "string?": &string?/1,
+      pos: &pos/2,
 
       tlstr: fn(arg) ->
         if String.length(arg) == 0 do

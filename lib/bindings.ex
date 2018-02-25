@@ -1,7 +1,4 @@
-defmodule Klambda.Bindings do
-  @moduledoc """
-`   A GenServer that stores the values of all variables`
-  """
+defmodule KL.Bindings do
   use GenServer
 
   def start_link(vars) do

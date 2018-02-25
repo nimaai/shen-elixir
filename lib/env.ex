@@ -1,20 +1,20 @@
-defmodule Klambda.Env do
-  alias Klambda.Bindings
-  alias Klambda.Primitives
+defmodule KL.Env do
+  alias KL.Bindings, as: B
+  alias KL.Primitives, as: P
   require IEx
 
   def init do
     func = fn ->
-      {:ok, functions_pid} = Bindings.start_link(Primitives.mapping)
-      {:ok, globals_pid}= Bindings.start_link(
+      {:ok, f_pid} = B.start_link(P.mapping)
+      {:ok, g_pid}= B.start_link(
         %{"*stinput*": :stdio,
           "*stoutput*": :stdio,
           "*home-directory*": "" # really???
         }
       )
 
-      %{globals: globals_pid,
-        functions: functions_pid,
+      %{globals: g_pid,
+        functions: f_pid,
         start_time: DateTime.utc_now() |> DateTime.to_unix()
       }
     end
@@ -22,14 +22,14 @@ defmodule Klambda.Env do
   end
 
   def lookup_global(sym) do
-    Bindings.lookup(
+    B.lookup(
       Agent.get(:env, fn state -> state[:globals] end),
       sym
     )
   end
 
   def define_global(sym, val) do
-    Bindings.define(
+    B.define(
       Agent.get(:env, fn state -> state[:globals] end),
       sym,
       val
@@ -38,7 +38,7 @@ defmodule Klambda.Env do
 
   def lookup_function(sym) do
     %{functions: pid} = Agent.get(:env, fn state -> state end)
-    gf = Bindings.lookup(pid, sym)
+    gf = B.lookup(pid, sym)
     if is_nil(gf) do
       throw {:error, "Undefined function #{sym}"}
     else
@@ -47,7 +47,7 @@ defmodule Klambda.Env do
   end
 
   def define_function(sym, fn_body) do
-    Bindings.define(
+    B.define(
       Agent.get(:env, fn state -> state[:functions] end),
       sym,
       fn_body

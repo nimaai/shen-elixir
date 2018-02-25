@@ -1,4 +1,4 @@
-defmodule Klambda.Curry do
+defmodule KL.Curry do
 
   def curry(fun) do
     {_, arity} = :erlang.fun_info(fun, :arity)

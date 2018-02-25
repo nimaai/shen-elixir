@@ -1,4 +1,4 @@
-defmodule Klambda.Reader do
+defmodule KL.Reader do
   require IEx
 
   def tokenise(expr) do

@@ -1,4 +1,4 @@
-defmodule Klambda.Lambda do
+defmodule KL.Lambda do
   require IEx
 
   # param is not free

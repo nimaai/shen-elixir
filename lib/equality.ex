@@ -1,5 +1,5 @@
-defmodule Klambda.Equality do
-  alias Klambda.Cons
+defmodule KL.Equality do
+  alias KL.Cons
 
   def equal?(arg1, arg2) when is_number(arg1) and is_number(arg2) do
     arg1 == arg2
