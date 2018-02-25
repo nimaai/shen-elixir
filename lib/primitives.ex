@@ -17,18 +17,18 @@ defmodule KL.Primitives do
   def kl_if(x, y, z) when is_boolean(x), do: if x, do: y, else: z
 
   @spec trap_error(Exception.t | T.kl_atom, fun) :: T.kl_atom
-  def trap_error(%RuntimeError{} = x, f), do: f.(x)
+  def trap_error(%KL.SimpleError{} = x, f), do: f.(x)
   def trap_error(x, _f), do: x
 
   @spec simple_error(String.t) :: Exception.t
-  def simple_error(x), do: raise(x)
+  def simple_error(x) when is_binary(x), do: raise KL.SimpleError, message: x
 
-  @spec error_to_string(T.kl_atom) :: String.t
+  @spec error_to_string(Exception.t) :: String.t
   def error_to_string(x) do
-    if Exception.exception?(x) do
+    if match?(%KL.SimpleError{}, x) do
       x.message
     else
-      raise "#{x} is not an exception"
+      Exception.format_banner(:error, x)
     end
   end
 
@@ -72,17 +72,31 @@ defmodule KL.Primitives do
   def less_or_equal_than(x, y), do: x <= y
 
   @spec string?(T.kl_atom) :: boolean
-  def string?(x), do: is_bitstring(x)
+  def string?(x), do: is_binary(x)
 
-  @spec pos(String.T, number) :: String.T
+  @spec pos(String.t, number) :: String.t
   def pos(x, y) do
-    r = String.at(x, y)
-    if is_nil(r) do
-      throw {:"simple-error", "String index is out bounds"}
+    z = String.at(x, y)
+    if is_nil(z) do
+      raise "string index is out of bounds"
     else
-      r
+      z
     end
   end
+
+  @spec tlstr(String.t) :: String.t
+  def tlstr(x) when is_binary(x) do
+    if String.length(x) == 0 do
+      raise "argument is empty string"
+    else
+      {_, tlstr} = String.split_at(x, 1)
+      tlstr
+    end
+  end
+
+  @spec cn(String.t, String.t) :: String.t
+  def cn(x, y) when is_binary(x) and is_binary(y), do: x <> y
+
 
   def mapping do
     m = %{
@@ -106,21 +120,12 @@ defmodule KL.Primitives do
       <=: &less_or_equal_than/2,
       "string?": &string?/1,
       pos: &pos/2,
-
-      tlstr: fn(arg) ->
-        if String.length(arg) == 0 do
-          throw {:"simple-error", "Argument is empty string"}
-        else
-          {_, tlstr} = String.split_at(arg, 1)
-          tlstr
-        end
-      end,
+      tlstr: &tlstr/1,
 
       cn: &<>/2,
-
       str: fn(arg) ->
         cond do
-          is_bitstring(arg) -> "\"" <> arg <> "\""
+          is_binary(arg) -> "\"" <> arg <> "\""
           is_number(arg) -> to_string(arg)
           is_atom(arg) -> to_string(arg)
           is_function(arg) -> inspect(arg)
