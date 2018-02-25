@@ -16,15 +16,15 @@ defmodule KL.Primitives do
   @spec kl_if(boolean, T.kl_atom, T.kl_atom) :: T.kl_atom
   def kl_if(x, y, z) when is_boolean(x), do: if x, do: y, else: z
 
-  @spec trap_error(%KL.Error{} | T.kl_atom, fun) :: T.kl_atom
-  def trap_error(%KL.Error{} = x, f), do: f.(x)
+  @spec trap_error(Exception.t | T.kl_atom, fun) :: T.kl_atom
+  def trap_error(%RuntimeError{} = x, f), do: f.(x)
   def trap_error(x, _f), do: x
 
   @spec simple_error(String.t) :: Exception.t
-  def simple_error(x), do: raise KL.Error, message: x
+  def simple_error(x), do: raise(x)
 
-  @spec error_to_string(%KL.Error{}) :: String.t
-  def error_to_string(%KL.Error{message: x}), do: x
+  @spec error_to_string(Exception.t) :: String.t
+  def error_to_string(%RuntimeError{message: x}), do: x
 
   @spec intern(String.t) :: atom
   def intern(x), do: String.to_atom(x)

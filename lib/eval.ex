@@ -54,7 +54,7 @@ defmodule KL.Eval do
     try do
       eval(x, e)
     rescue
-      ex in KL.Error -> eval(f, e).(ex)
+      ex -> eval(f, e).(ex)
     end
   end
 

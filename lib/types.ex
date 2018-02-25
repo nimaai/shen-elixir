@@ -6,7 +6,7 @@ defmodule KL.Types do
                  | boolean
                  | pid
                  | function
-                 | %KL.Error{}
+                 | %RuntimeError{}
   @type env :: map
   @type function_application :: [operator | list(expr)]
   @type operator :: atom | function_application
