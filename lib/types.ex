@@ -1,11 +1,12 @@
 defmodule KL.Types do
-  @type expr :: kl_atom | function_application
-  @type kl_atom :: atom
+  @type expr :: kl_term | function_application
+  @type kl_term :: atom
                  | String.t
                  | number
                  | boolean
                  | pid
                  | function
+                 | maybe_improper_list
                  | %KL.SimpleError{}
   @type env :: map
   @type function_application :: [operator | list(expr)]

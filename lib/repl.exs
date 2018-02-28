@@ -57,5 +57,6 @@ end
 # :dbg.tracer()
 # :dbg.p(:all, :c)
 # :dbg.tpl(KL.Eval, :eval, 2, :x)
+Process.flag(:trap_exit, true)
 KL.Env.init
 KL.Repl.repl

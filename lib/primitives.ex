@@ -2,7 +2,6 @@ defmodule KL.Primitives do
   alias KL.Env, as: E
   import KL.Eval, only: [eval: 2]
   alias KL.Equality
-  alias KL.Print
   alias KL.Types, as: T
   import KL.Curry
   require IEx
@@ -13,10 +12,10 @@ defmodule KL.Primitives do
   @spec kl_or(boolean, boolean) :: boolean
   def kl_or(x, y) when is_boolean(x) and is_boolean(y), do: x or y
 
-  @spec kl_if(boolean, T.kl_atom, T.kl_atom) :: T.kl_atom
+  @spec kl_if(boolean, T.kl_term, T.kl_term) :: T.kl_term
   def kl_if(x, y, z) when is_boolean(x), do: if x, do: y, else: z
 
-  @spec trap_error(Exception.t | T.kl_atom, fun) :: T.kl_atom
+  @spec trap_error(Exception.t | T.kl_term, fun) :: T.kl_term
   def trap_error(%KL.SimpleError{} = x, f), do: f.(x)
   def trap_error(x, _f), do: x
 
@@ -35,16 +34,16 @@ defmodule KL.Primitives do
   @spec intern(String.t) :: atom
   def intern(x), do: String.to_atom(x)
 
-  @spec set(atom, T.kl_atom) :: atom
+  @spec set(atom, T.kl_term) :: atom
   def set(x, y) do
     :ok = E.define_global(x, y)
     x
   end
 
-  @spec value(atom) :: T.kl_atom
+  @spec value(atom) :: T.kl_term
   def value(x), do: E.lookup_global(x)
 
-  @spec number?(T.kl_atom) :: boolean
+  @spec number?(T.kl_term) :: boolean
   def number?(x), do: is_number(x)
 
   @spec add(number, number) :: number
@@ -71,7 +70,7 @@ defmodule KL.Primitives do
   @spec less_or_equal_than(number, number) :: number
   def less_or_equal_than(x, y), do: x <= y
 
-  @spec string?(T.kl_atom) :: boolean
+  @spec string?(T.kl_term) :: boolean
   def string?(x), do: is_binary(x)
 
   @spec pos(String.t, number) :: String.t
@@ -97,6 +96,92 @@ defmodule KL.Primitives do
   @spec cn(String.t, String.t) :: String.t
   def cn(x, y) when is_binary(x) and is_binary(y), do: x <> y
 
+  @spec str(T.kl_term) :: String.t
+  def str(x) do
+    cond do
+      match?([], x) -> raise "[] is not an atom in Shen; str cannot convert it to a string."
+      is_atom(x) -> to_string(x)
+      is_number(x) -> to_string(x)
+      is_binary(x) -> ~s("#{x}")
+      is_pid(x) -> inspect(x)
+      is_function(x) -> inspect(x)
+      true -> raise "#{x} is not an atom, stream or closure; str cannot convert it to a string."
+    end
+  end
+
+  @spec string_to_n(String.t) :: integer
+  def string_to_n(x), do: List.first String.to_charlist(x)
+
+  @spec n_to_string(integer) :: String.t
+  def n_to_string(x), do: <<x>>
+
+  @spec absvector(integer) :: pid
+  def absvector(x) do
+    {:ok, p} = Agent.start_link(fn -> :array.new(x) end)
+    p
+  end
+
+  @spec put_to_address(pid, integer, T.kl_term) :: pid
+  def put_to_address(p, y, z) do
+    Agent.update(p, fn(a) -> :array.set(y, z, a) end)
+    p
+  end
+
+  @spec get_from_address(pid, integer) :: T.kl_term
+  def get_from_address(p, y) do
+    Agent.get(p, fn(a) -> :array.get(a, y) end)
+  end
+
+  @spec absvector?(T.kl_term) :: boolean
+  def absvector?(p) when is_pid(p) do
+    Agent.get(p, fn(a) -> :array.is_array(a) end)
+  end
+  def absvector?(_), do: false
+
+  @spec cons?(list(T.kl_term)) :: boolean
+  def cons?(x), do: is_list(x)
+
+  @spec cons(T.kl_term, T.kl_term) :: list(T.kl_term)
+  def cons(x, y), do: [x | y]
+
+  @spec kl_hd(list(T.kl_term)) :: T.kl_term
+  def kl_hd(x), do: hd(x)
+
+  @spec kl_tl(list(T.kl_term)) :: T.kl_term
+  def kl_tl(x), do: tl(x)
+
+  @spec write_byte(pid, integer) :: integer
+  def write_byte(s, b) do
+    :ok = IO.binwrite(s, <<b>>)
+    b
+  end
+
+  @spec read_byte(pid) :: integer
+  def read_byte(s) do
+    c = IO.binread(s, 1)
+    <<n, _>> = c <> <<0>>
+    case n do
+      :eof -> -1
+      _ -> n
+    end
+  end
+
+  @spec open(String.t, atom) :: io_device
+  def open(x, y) do
+    m = case y do
+      :in -> :read
+      :out -> :write
+      _ -> raise "invalid direction"
+    end
+    {:ok, p} = File.open(path, [m])
+    p
+  end
+
+  @spec close(io_device) :: nil
+  def close(x) do
+    :ok = File.close(x)
+    nil
+  end
 
   def mapping do
     m = %{
@@ -121,112 +206,22 @@ defmodule KL.Primitives do
       "string?": &string?/1,
       pos: &pos/2,
       tlstr: &tlstr/1,
-
-      cn: &<>/2,
-      str: fn(arg) ->
-        cond do
-          is_binary(arg) -> "\"" <> arg <> "\""
-          is_number(arg) -> to_string(arg)
-          is_atom(arg) -> to_string(arg)
-          is_function(arg) -> inspect(arg)
-          is_pid(arg) -> inspect(arg)
-          match?([:lambda | _], arg) -> Print.print(arg)
-          match?({:vector, _, _}, arg) -> Print.print(arg)
-          true -> throw {:"simple-error", "argument cannot be converted to string"}
-        end
-      end,
-
-      "string->n": fn(arg) ->
-        if String.length(arg) == 0 do
-          throw {:"simple-error", "Argument is empty string"}
-        else
-          List.first(String.to_charlist(arg))
-        end
-      end,
-
-      "n->string": fn(arg) ->
-        if String.valid? <<arg>> do
-          <<arg>>
-        else
-          throw {:"simple-error", "Not a valid codepoint"}
-        end
-      end,
-
-      ############################ ARRAYS #####################################
-
-      absvector: fn(size) ->
-        # TODO: raise error if size negative or exceeds platform
-        tuple = Tuple.duplicate(:nil, size)
-        {:ok, pid} = Agent.start_link(fn -> tuple end)
-          {:vector, size, pid}
-      end,
-
-      "address->": fn({:vector, _, pid} = vector, pos, val) ->
-        Agent.update(
-          pid,
-          fn(tuple) -> put_elem(tuple, pos, val) end
-        )
-        vector
-      end,
-
-      "<-address": fn({:vector, size, pid}, pos) ->
-        if (pos + 1) <= size do
-          Agent.get(pid, fn(tuple) -> elem(tuple, pos) end)
-        else
-          throw {:"simple-error", "tuple index out of bounds"}
-        end
-      end,
-
-      "absvector?": fn(arg) ->
-        if match?({:vector, _, _}, arg) do
-          is_pid(elem(arg, 1))
-        else
-          false
-        end
-      end,
-
-      ############################ CONSES #####################################
-
-      "cons?": fn(arg) -> match?({:cons, [_ | _]}, arg) end,
-
-      cons: fn(head, tail) -> {:cons, [head | tail]} end,
-
-      hd: fn({:cons, [head | _]}) -> head end,
-
-      tl: fn({:cons, [_ | tail]}) -> tail end,
-
-      ############################ STREAMS ####################################
-
-      "write-byte": fn(num, stream) ->
-        # TODO: raise error if stream closed or on in out mode
-        :ok = IO.binwrite( stream, to_string(<<num>>) )
-        num
-      end,
-
-      "read-byte": fn(stream) ->
-        # TODO: raise error if stream closed or on in in mode
-        char = IO.binread( stream, 1 )
-        <<num, _>> = char <> <<0>>
-        case num do
-          :eof -> -1
-          _ -> num
-        end
-      end,
-
-      open: fn(path, mode) ->
-        m = case mode do
-          :in -> :read
-          :out -> :write
-          _ -> {:"simple-error", "invalid mode"}
-        end
-        {:ok, pid} = File.open( path, [m] )
-        pid
-      end,
-
-      close: fn(stream) ->
-        true = Process.exit( stream, :kill )
-        []
-      end,
+      cn: &cn/2,
+      str: &str/1,
+      "string->n": &string_to_n/1,
+      "n->string": &n_to_string/1,
+      absvector: &absvector/1,
+      "address->": &put_to_address/3,
+      "<-address": &get_from_address/2,
+      "absvector?": &absvector?/1,
+      "cons?": &cons?/1,
+      cons: &cons/2,
+      "hd": &kl_hd/1,
+      "tl": &kl_tl/1,
+      "write-byte": &write_byte/2,
+      "read-byte": &read_byte/1,
+      open: &open/2,
+      close: &close/1,
 
       ############################ GENERAL ####################################
 
