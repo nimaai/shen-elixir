@@ -27,12 +27,15 @@ defmodule KL.Repl do
     end
 
     cond do
-      match?(%KL.SimpleError{}, v) -> IO.puts(v.message)
-      Exception.exception?(v) -> Exception.format_banner(:error, v) |> IO.puts
-      true -> v |> Print.print |> IO.puts
+      match?(%KL.SimpleError{}, v) ->
+        IO.puts(v.message)
+        IO.binwrite("\n")
+      Exception.exception?(v) -> Exception.format(:error, v) |> IO.puts
+      true ->
+        v |> Print.print |> IO.puts
+        IO.binwrite("\n")
     end
 
-    IO.binwrite("\n")
     repl(num + 1, [])
   end
 

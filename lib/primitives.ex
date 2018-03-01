@@ -58,16 +58,16 @@ defmodule KL.Primitives do
   @spec divide(number, number) :: number
   def divide(x, y), do: x / y
 
-  @spec greater_than(number, number) :: number
+  @spec greater_than(number, number) :: boolean
   def greater_than(x, y), do: x > y
 
-  @spec less_than(number, number) :: number
+  @spec less_than(number, number) :: boolean
   def less_than(x, y), do: x < y
 
-  @spec greater_or_equal_than(number, number) :: number
+  @spec greater_or_equal_than(number, number) :: boolean
   def greater_or_equal_than(x, y), do: x >= y
 
-  @spec less_or_equal_than(number, number) :: number
+  @spec less_or_equal_than(number, number) :: boolean
   def less_or_equal_than(x, y), do: x <= y
 
   @spec string?(T.kl_term) :: boolean
@@ -159,25 +159,26 @@ defmodule KL.Primitives do
   @spec read_byte(pid) :: integer
   def read_byte(s) do
     c = IO.binread(s, 1)
-    <<n, _>> = c <> <<0>>
-    case n do
-      :eof -> -1
-      _ -> n
+    if c == :eof do
+      -1
+    else
+      <<n, _>> = c <> <<0>>
+      n
     end
   end
 
-  @spec open(String.t, atom) :: io_device
+  @spec open(String.t, atom) :: File.io_device
   def open(x, y) do
     m = case y do
       :in -> :read
       :out -> :write
       _ -> raise "invalid direction"
     end
-    {:ok, p} = File.open(path, [m])
+    {:ok, p} = File.open(x, [m])
     p
   end
 
-  @spec close(io_device) :: nil
+  @spec close(pid) :: nil
   def close(x) do
     :ok = File.close(x)
     nil

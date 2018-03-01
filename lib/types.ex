@@ -8,6 +8,7 @@ defmodule KL.Types do
                  | function
                  | maybe_improper_list
                  | %KL.SimpleError{}
+                 | nil
   @type env :: map
   @type function_application :: [operator | list(expr)]
   @type operator :: atom | function_application

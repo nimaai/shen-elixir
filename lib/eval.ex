@@ -82,17 +82,17 @@ defmodule KL.Eval do
     x
   end
 
-  @spec p_apply(fun, list(T.kl_atom)) :: T.kl_atom
+  @spec p_apply(fun, list(T.kl_term)) :: T.kl_term
   def p_apply(f, xs) do
     Enum.reduce(xs, f, fn(x, f) -> f.(x) end)
   end
 
-  @spec map_eval(list(T.expr), T.env) :: list(T.kl_atom)
+  @spec map_eval(list(T.expr), T.env) :: list(T.kl_term)
   def map_eval(xs, e) do
     Enum.map(xs, fn(x) -> eval(x, e) end)
   end
 
-  @spec curry_defun(list(atom), T.expr, T.env) :: T.kl_atom | fun
+  @spec curry_defun(list(atom), T.expr, T.env) :: T.kl_term | fun
   def curry_defun([], x, e) do
     eval(x, e)
   end
