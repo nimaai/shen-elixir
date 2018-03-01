@@ -182,6 +182,9 @@ defmodule KL.Primitives do
     nil
   end
 
+  @spec equal?(T.kl_term, T.kl_term) :: boolean
+  def equal?(x, y), do: Equality.equal?(x, y)
+
   def mapping do
     m = %{
       and: &kl_and/2,
@@ -221,10 +224,7 @@ defmodule KL.Primitives do
       "read-byte": &read_byte/1,
       open: &open/2,
       close: &close/1,
-
-      ############################ GENERAL ####################################
-
-      "=": &Equality.equal?/2,
+      "=": &equal?/2,
 
       "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> eval(%{}) end,
 

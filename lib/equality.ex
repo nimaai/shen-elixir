@@ -1,40 +1,35 @@
 defmodule KL.Equality do
-  alias KL.Cons
+  alias KL.Types, as: T
+  require IEx
 
   @spec equal?(T.kl_term, T.kl_term) :: boolean
-  def equal?(x, y) when is_list(x) and is_list(y), do: x == y
-  def equal?(x, y) when is_binary(x) and is_binary(y), do: x == y
-  def equal?(x, y) when is_number(x) and is_number(y), do: x == y
-
-  def equal?(x, y) when is_atom(x) and is_atom(y) do
-    x == y
+  def equal?(x, y) when is_list(x) and is_list(y) do
+    equal?(x, y) and equal?(tl(x), tl(y))
   end
 
-  def equal?({:cons, list1}, {:cons, list2}) do
-    list1 == list2
+  def equal?({:vector, x}, {:vector, y}) when is_pid(x) and is_pid(y) do
+    p = Agent.get(x, fn(a) -> a end)
+    q = Agent.get(y, fn(a) -> a end)
+    cf_vectors(p, q, :array.size(p), :array.size(q))
   end
 
-  def equal?([], []) do
-    true
+  def equal?({:stream, x}, {:stream, y}) when is_pid(x) and is_pid(y), do: x == y
+
+  def equal?(x, y), do: x == y
+
+  @spec cf_vectors(:array.array, :array.array, number, number) :: boolean
+  defp cf_vectors(x, y, lx, ly) do
+    lx == ly and cf_vectors_help(x, y, 0, lx - 1)
   end
 
-  def equal?(x, y) when is_function(x) and is_function(y) do
-    x == y
-  end
-
-  def equal?(x, y) when is_function(x) and is_function(y) do
-    x == y
-  end
-
-  def equal?([:lambda, id1 | _], [:lambda, id2 | _]) do
-    id1 == id2
-  end
-
-  def equal?(x, y) when is_pid(x) and is_pid(y) do
-    x == y
-  end
-
-  def equal?(_x, _y) do
-    false
+  @spec cf_vectors_help(:array.array, :array.array, number, number) :: boolean
+  defp cf_vectors_help(x, y, count, max) do
+    cond do
+      count == max ->
+        equal?(:array.get(max, x), :array.get(max, y))
+      equal?(:array.get(count, x), :array.get(count, y)) ->
+        cf_vectors_help(x, y, count + 1, max)
+      true -> false
+    end
   end
 end
