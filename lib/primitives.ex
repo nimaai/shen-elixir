@@ -105,7 +105,7 @@ defmodule KL.Primitives do
       is_binary(x) -> ~s("#{x}")
       is_pid(x) -> inspect(x)
       is_function(x) -> inspect(x)
-      true -> raise "#{x} is not an atom, stream or closure; str cannot convert it to a string."
+      true -> raise "#{inspect(x)} is not an atom, stream or closure; str cannot convert it to a string."
     end
   end
 
@@ -185,6 +185,11 @@ defmodule KL.Primitives do
   @spec equal?(T.kl_term, T.kl_term) :: boolean
   def equal?(x, y), do: Equality.equal?(x, y)
 
+  @spec eval_kl(list) :: T.kl_term
+  def eval_kl(x) do
+    eval(x, %{})
+  end
+
   def mapping do
     m = %{
       and: &kl_and/2,
@@ -225,8 +230,7 @@ defmodule KL.Primitives do
       open: &open/2,
       close: &close/1,
       "=": &equal?/2,
-
-      "eval-kl": fn(kl_expr) -> kl_expr |> cons_to_list |> eval(%{}) end,
+      "eval-kl": &eval_kl/1,
 
       ######################### INFORMATIONAL #################################
 

@@ -1,12 +1,11 @@
 defmodule KL.Repl do
   alias KL.Reader
   alias KL.Eval
-  alias KL.Print
   require IEx
 
   def repl(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
     leading_text = if is_nil(leading_text) do
-      "klambda(#{num})> "
+      "kl(#{num})> "
     else
       leading_text
     end
@@ -32,7 +31,7 @@ defmodule KL.Repl do
         IO.binwrite("\n")
       Exception.exception?(v) -> Exception.format(:error, v) |> IO.puts
       true ->
-        v |> Print.print |> IO.puts
+        v |> inspect |> IO.puts
         IO.binwrite("\n")
     end
 
