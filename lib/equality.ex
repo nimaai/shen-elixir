@@ -1,16 +1,13 @@
 defmodule KL.Equality do
   alias KL.Cons
 
-  def equal?(arg1, arg2) when is_number(arg1) and is_number(arg2) do
-    arg1 == arg2
-  end
+  @spec equal?(T.kl_term, T.kl_term) :: boolean
+  def equal?(x, y) when is_list(x) and is_list(y), do: x == y
+  def equal?(x, y) when is_binary(x) and is_binary(y), do: x == y
+  def equal?(x, y) when is_number(x) and is_number(y), do: x == y
 
-  def equal?(arg1, arg2) when is_binary(arg1) and is_binary(arg2) do
-    arg1 == arg2
-  end
-
-  def equal?(arg1, arg2) when is_atom(arg1) and is_atom(arg2) do
-    arg1 == arg2
+  def equal?(x, y) when is_atom(x) and is_atom(y) do
+    x == y
   end
 
   def equal?({:cons, list1}, {:cons, list2}) do
@@ -21,23 +18,23 @@ defmodule KL.Equality do
     true
   end
 
-  def equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do
-    arg1 == arg2
+  def equal?(x, y) when is_function(x) and is_function(y) do
+    x == y
   end
 
-  def equal?(arg1, arg2) when is_function(arg1) and is_function(arg2) do
-    arg1 == arg2
+  def equal?(x, y) when is_function(x) and is_function(y) do
+    x == y
   end
 
   def equal?([:lambda, id1 | _], [:lambda, id2 | _]) do
     id1 == id2
   end
 
-  def equal?(arg1, arg2) when is_pid(arg1) and is_pid(arg2) do
-    arg1 == arg2
+  def equal?(x, y) when is_pid(x) and is_pid(y) do
+    x == y
   end
 
-  def equal?(_arg1, _arg2) do
+  def equal?(_x, _y) do
     false
   end
 end

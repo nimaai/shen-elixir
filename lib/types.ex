@@ -4,7 +4,8 @@ defmodule KL.Types do
                  | String.t
                  | number
                  | boolean
-                 | pid
+                 | {:vector, pid}
+                 | {:stream, pid}
                  | function
                  | maybe_improper_list
                  | %KL.SimpleError{}

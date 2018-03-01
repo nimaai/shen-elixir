@@ -115,27 +115,25 @@ defmodule KL.Primitives do
   @spec n_to_string(integer) :: String.t
   def n_to_string(x), do: <<x>>
 
-  @spec absvector(integer) :: pid
+  @spec absvector(integer) :: {:vector, pid}
   def absvector(x) do
     {:ok, p} = Agent.start_link(fn -> :array.new(x) end)
-    p
+    {:vector, p}
   end
 
-  @spec put_to_address(pid, integer, T.kl_term) :: pid
-  def put_to_address(p, y, z) do
+  @spec put_to_address({:vector, pid}, integer, T.kl_term) :: {:vector, pid}
+  def put_to_address({:vector, p}, y, z) do
     Agent.update(p, fn(a) -> :array.set(y, z, a) end)
-    p
+    {:vector, p}
   end
 
-  @spec get_from_address(pid, integer) :: T.kl_term
-  def get_from_address(p, y) do
+  @spec get_from_address({:vector, pid}, integer) :: T.kl_term
+  def get_from_address({:vector, p}, y) do
     Agent.get(p, fn(a) -> :array.get(a, y) end)
   end
 
   @spec absvector?(T.kl_term) :: boolean
-  def absvector?(p) when is_pid(p) do
-    Agent.get(p, fn(a) -> :array.is_array(a) end)
-  end
+  def absvector?({:vector, p}) when is_pid(p), do: true
   def absvector?(_), do: false
 
   @spec cons?(list(T.kl_term)) :: boolean
@@ -150,14 +148,14 @@ defmodule KL.Primitives do
   @spec kl_tl(list(T.kl_term)) :: T.kl_term
   def kl_tl(x), do: tl(x)
 
-  @spec write_byte(pid, integer) :: integer
-  def write_byte(s, b) do
+  @spec write_byte({:stream, pid}, integer) :: integer
+  def write_byte({:stream, s}, b) do
     :ok = IO.binwrite(s, <<b>>)
     b
   end
 
-  @spec read_byte(pid) :: integer
-  def read_byte(s) do
+  @spec read_byte({:stream, pid}) :: integer
+  def read_byte({:stream, s}) do
     c = IO.binread(s, 1)
     if c == :eof do
       -1
@@ -167,7 +165,7 @@ defmodule KL.Primitives do
     end
   end
 
-  @spec open(String.t, atom) :: File.io_device
+  @spec open(String.t, atom) :: {:stream, File.io_device}
   def open(x, y) do
     m = case y do
       :in -> :read
@@ -175,11 +173,11 @@ defmodule KL.Primitives do
       _ -> raise "invalid direction"
     end
     {:ok, p} = File.open(x, [m])
-    p
+    {:stream, p}
   end
 
-  @spec close(pid) :: nil
-  def close(x) do
+  @spec close({:stream, pid}) :: nil
+  def close({:stream, x}) do
     :ok = File.close(x)
     nil
   end
