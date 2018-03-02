@@ -3,7 +3,6 @@ alias KL.Eval
 
 defmodule Shen.Bootstrap do
   alias KL.Reader
-  alias KL.Eval
   require IEx
 
   def read_and_eval_kl_file(path) do
@@ -38,7 +37,7 @@ defmodule Shen.Bootstrap do
     |> Reader.tokenise
     |> Reader.read
     |> hd
-    |> Eval.eval
+    |> Eval.eval(%{})
   end
 
   defp read_form(file, form_iod, left, right) do
@@ -107,7 +106,7 @@ Enum.each(
   ],
   fn(file) ->
     IO.puts("loading: #{file}")
-    Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}")
+    Shen.Bootstrap.read_and_eval_kl_file("kl-sources/#{file}")
   end
 )
 end_time = DateTime.utc_now |> DateTime.to_unix

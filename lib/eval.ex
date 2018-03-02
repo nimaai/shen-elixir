@@ -63,11 +63,11 @@ defmodule KL.Eval do
   end
 
   def eval([f | xs], e) when is_atom(f) do
-    eval([E.get_fn(f) | xs], e)
+    eval([E.get_fn(f) | map_eval(xs, e)], e)
   end
 
-  def eval([f | xs], e) when is_function(f) do
-    p_apply(f, map_eval(xs, e))
+  def eval([f | xs], _e) when is_function(f) do
+    p_apply(f, xs)
   end
 
   def eval([[_ | _] = f | xs], e) do
