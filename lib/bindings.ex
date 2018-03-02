@@ -1,37 +1,26 @@
 defmodule KL.Bindings do
   use GenServer
+  alias KL.Types, as: T
 
-  def start_link(vars) do
-    GenServer.start_link(__MODULE__, {:ok, vars})
+  def start_link(m) do
+    GenServer.start_link(__MODULE__, {:ok, m})
   end
 
-  def lookup(pid, sym) do
-    GenServer.call(pid, {:lookup, sym})
-  end
+  @spec lookup(pid, atom) :: T.kl_term
+  def lookup(p, n), do: GenServer.call(p, {:lookup, n})
 
-  def define(pid, sym, value) do
-    GenServer.cast(pid, {:define, sym, value})
-  end
+  @spec define(pid, atom, T.kl_term) :: :ok
+  def define(p, n, v), do: GenServer.cast(p, {:define, n, v})
 
-  def all(pid) do
-    GenServer.call(pid, :all)
-  end
+  @spec all(pid) :: map
+  def all(p), do: GenServer.call(p, :all)
 
   ## Callbacks
 
-  def init({:ok, vars}) do
-    {:ok, vars}
-  end
+  @spec handle_call({:lookup, atom} | :all, any, atom) :: {:reply, map | T.kl_term, map}
+  def handle_call({:lookup, n}, _, m), do: {:reply, Map.get(m, n), m}
+  def handle_call(:all, _, m), do: {:reply, m, m}
 
-  def handle_call({:lookup, sym}, _from, vars) do
-    {:reply, Map.get(vars, sym), vars}
-  end
-
-  def handle_call(:all, _from, vars) do
-    {:reply, vars, vars}
-  end
-
-  def handle_cast({:define, sym, value}, vars) do
-    {:noreply, Map.put(vars, sym, value)}
-  end
+  @spec handle_cast({:define, atom, T.kl_term}, map) :: {:noreply, map}
+  def handle_cast({:define, n, v}, m), do: {:noreply, Map.put(m, n, v)}
 end

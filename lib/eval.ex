@@ -6,12 +6,12 @@ defmodule KL.Eval do
 
   @spec eval(T.expr, T.env) :: T.expr
   def eval([:defun, f, [], b], %{}) do
-    :ok = E.define_function(f, fn -> eval(b, %{}) end)
+    :ok = E.set_fn(f, fn -> eval(b, %{}) end)
     f
   end
 
   def eval([:defun, f, ps, b], %{}) do
-    :ok = E.define_function(f, curry_defun(ps, b, %{}))
+    :ok = E.set_fn(f, curry_defun(ps, b, %{}))
     f
   end
 
@@ -63,7 +63,7 @@ defmodule KL.Eval do
   end
 
   def eval([f | xs], e) when is_atom(f) do
-    eval([E.lookup_function(f) | xs], e)
+    eval([E.get_fn(f) | xs], e)
   end
 
   def eval([f | xs], e) when is_function(f) do

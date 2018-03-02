@@ -1,8 +1,8 @@
 defmodule KL.Primitives do
-  alias KL.Env, as: E
-  import KL.Eval, only: [eval: 2]
   alias KL.Equality
+  alias KL.Env, as: E
   alias KL.Types, as: T
+  alias KL.Eval
   import KL.Curry
   require IEx
 
@@ -36,12 +36,12 @@ defmodule KL.Primitives do
 
   @spec set(atom, T.kl_term) :: atom
   def set(x, y) do
-    :ok = E.define_global(x, y)
+    :ok = E.set_var(x, y)
     x
   end
 
   @spec value(atom) :: T.kl_term
-  def value(x), do: E.lookup_global(x)
+  def value(x), do: E.get_var(x)
 
   @spec number?(T.kl_term) :: boolean
   def number?(x), do: is_number(x)
@@ -186,12 +186,23 @@ defmodule KL.Primitives do
   def equal?(x, y), do: Equality.equal?(x, y)
 
   @spec eval_kl(list) :: T.kl_term
-  def eval_kl(x) do
-    eval(x, %{})
+  def eval_kl(x), do: Eval.eval(x, %{})
+
+  @spec get_time(T.kl_term) :: integer
+  def get_time(x) do
+    now = DateTime.utc_now() |> DateTime.to_unix()
+    case x do
+      :unix -> now
+      :run -> now - Agent.get(:env, fn state -> state[:start_time] end)
+      _ -> raise "get-time does not understand the parameter #{inspect(x)}"
+    end
   end
 
+  @spec type(T.kl_term, atom) :: T.kl_term
+  def type(x, _y), do: x
+
   def mapping do
-    m = %{
+    %{
       and: &kl_and/2,
       or: &kl_or/2,
       if: &kl_if/3,
@@ -231,29 +242,10 @@ defmodule KL.Primitives do
       close: &close/1,
       "=": &equal?/2,
       "eval-kl": &eval_kl/1,
-
-      ######################### INFORMATIONAL #################################
-
-      "get-time": fn(arg) ->
-        now = DateTime.utc_now() |> DateTime.to_unix()
-        case arg do
-          :unix -> now
-          :run -> now - Agent.get(:env, fn state -> state[:start_time] end)
-          _ -> throw {:"simple-error", "invalid symbol for get-time"}
-        end
-      end,
-
-      type: fn(arg, _sym) -> eval(arg, %{}) end
+      "get-time": &get_time/1,
+      type: &type/2
     }
-
-    m
-    |> Enum.map(fn({name, func}) -> {name, curry(func)} end)
+    |> Enum.map(fn({n, f}) -> {n, curry(f)} end)
     |> Enum.into(%{})
   end
-
-  def cons_to_list({:cons, []}), do: []
-  def cons_to_list({:cons, [fst | rest]}) do
-    [cons_to_list(fst) | cons_to_list(rest)]
-  end
-  def cons_to_list(el), do: el
 end
