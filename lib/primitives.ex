@@ -150,6 +150,7 @@ defmodule KL.Primitives do
 
   @spec write_byte({:stream, pid}, integer) :: integer
   def write_byte({:stream, s}, b) do
+    IEx.pry
     :ok = IO.binwrite(s, <<b>>)
     b
   end
@@ -168,8 +169,8 @@ defmodule KL.Primitives do
   @spec open(String.t, atom) :: {:stream, File.io_device}
   def open(x, y) do
     m = case y do
-      :in -> :read
-      :out -> :write
+      :in -> :write
+      :out -> :read
       _ -> raise "invalid direction"
     end
     {:ok, p} = File.open(x, [m])

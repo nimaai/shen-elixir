@@ -7,20 +7,23 @@ defmodule KL.Bindings do
   end
 
   @spec lookup(pid, atom) :: T.kl_term
-  def lookup(p, n), do: GenServer.call(p, {:lookup, n})
+  def lookup(p, k), do: GenServer.call(p, {:lookup, k})
 
   @spec define(pid, atom, T.kl_term) :: :ok
-  def define(p, n, v), do: GenServer.cast(p, {:define, n, v})
+  def define(p, k, v), do: GenServer.cast(p, {:define, k, v})
 
   @spec all(pid) :: map
   def all(p), do: GenServer.call(p, :all)
 
   ## Callbacks
 
+  @spec init({:ok, map}) :: {:ok, map}
+  def init({:ok, m}), do: {:ok, m}
+
   @spec handle_call({:lookup, atom} | :all, any, atom) :: {:reply, map | T.kl_term, map}
-  def handle_call({:lookup, n}, _, m), do: {:reply, Map.get(m, n), m}
+  def handle_call({:lookup, k}, _, m), do: {:reply, Map.get(m, k), m}
   def handle_call(:all, _, m), do: {:reply, m, m}
 
   @spec handle_cast({:define, atom, T.kl_term}, map) :: {:noreply, map}
-  def handle_cast({:define, n, v}, m), do: {:noreply, Map.put(m, n, v)}
+  def handle_cast({:define, k, v}, m), do: {:noreply, Map.put(m, k, v)}
 end

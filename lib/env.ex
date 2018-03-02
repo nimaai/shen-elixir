@@ -8,17 +8,15 @@ defmodule KL.Env do
   def init do
     f = fn ->
       {:ok, fp} = B.start_link(P.mapping)
-      {:ok, gp}= B.start_link(
-        %{"*stinput*": :stdio,
-          "*stoutput*": :stdio,
-          "*home-directory*": "" # really???
-        }
-      )
+      {:ok, gp}= B.start_link(%{
+        "*stinput*": :stdio,
+        "*stoutput*": :stdio,
+        "*home-directory*": ""
+      })
 
       %{vars: gp,
         fns: fp,
-        start_time: DateTime.utc_now() |> DateTime.to_unix()
-      }
+        start_time: DateTime.utc_now() |> DateTime.to_unix()}
     end
     Agent.start_link(f, name: :env)
   end
@@ -30,7 +28,7 @@ defmodule KL.Env do
 
   @spec set_var(atom, T.kl_term) :: :ok
   def set_var(n, v) when is_atom(n) do
-    B.define(Agent.get(:env, fn(env) -> env[:fns] end), n, v)
+    B.define(Agent.get(:env, fn(env) -> env[:vars] end), n, v)
   end
 
   @spec get_fn(atom) :: function | Exception.t
