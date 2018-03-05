@@ -149,14 +149,15 @@ defmodule Kl.Primitives do
   def kl_tl(x), do: tl(x)
 
   # TODO: remove tuple
-  @spec write_byte(integer, {:stream, pid}) :: integer
+  @spec write_byte(integer, {:stream, pid | :stdio} | :stdio) :: integer
   def write_byte(b, :stdio), do: write_byte(b, {:stream, :stdio})
   def write_byte(b, {:stream, s}) do
     :ok = IO.binwrite(s, <<b>>)
     b
   end
 
-  @spec read_byte({:stream, pid}) :: integer
+  @spec read_byte({:stream, pid | :stdio} | :stdio) :: integer
+  def read_byte(:stdio), do: read_byte({:stream, :stdio})
   def read_byte({:stream, s}) do
     c = IO.binread(s, 1)
     if c == :eof do
