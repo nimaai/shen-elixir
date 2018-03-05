@@ -83,9 +83,6 @@ defmodule Shen.Bootstrap do
 end
 
 Env.init
-# :dbg.tracer()
-# :dbg.p(:all, :c)
-# :dbg.tp(Kl.Eval, :eval, 1, :x)
 start_time = DateTime.utc_now |> DateTime.to_unix
 Enum.each(
   [
@@ -111,4 +108,4 @@ Enum.each(
 )
 end_time = DateTime.utc_now |> DateTime.to_unix
 IO.puts("loaded in #{end_time - start_time} seconds")
-Eval.eval([:"shen.shen"])
+# Eval.eval([:"shen.shen"])

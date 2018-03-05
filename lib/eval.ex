@@ -20,7 +20,7 @@ defmodule Kl.Eval do
   end
 
   def eval([:let, p, v, b], e) do
-    eval(b, Map.put(e, p, v))
+    eval(b, Map.put(e, p, eval(v, e)))
   end
 
   def eval([:freeze, x], e) do
@@ -102,10 +102,12 @@ defmodule Kl.Eval do
   end
 
   @spec curry_defun(list(atom), T.expr, T.env) :: T.kl_term | fun
-  def curry_defun([], x, e) do
-    eval(x, e)
+  def curry_defun([], b, e) do
+    eval(b, e)
   end
-  def curry_defun([p | r], x, e) do
-    fn(v) -> curry_defun(r, x, Map.put(e, p, v)) end
+  def curry_defun([p | r], b, e) do
+    fn(v) ->
+      curry_defun(r, b, Map.put(e, p, v))
+    end
   end
 end
