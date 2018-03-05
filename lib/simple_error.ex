@@ -1,3 +1,3 @@
-defmodule KL.SimpleError do
+defmodule Kl.SimpleError do
   defexception [:message]
 end

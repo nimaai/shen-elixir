@@ -1,5 +1,5 @@
-defmodule KL.Equality do
-  alias KL.Types, as: T
+defmodule Kl.Equality do
+  alias Kl.Types, as: T
   require IEx
 
   @spec equal?(T.kl_term, T.kl_term) :: boolean

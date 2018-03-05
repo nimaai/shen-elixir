@@ -1,6 +1,6 @@
-defmodule KL.Eval do
-  alias KL.Env, as: E
-  alias KL.Types, as: T
+defmodule Kl.Eval do
+  alias Kl.Env, as: E
+  alias Kl.Types, as: T
   require IEx
   require Integer
 
@@ -62,12 +62,21 @@ defmodule KL.Eval do
     eval(f, e).(eval(x, e))
   end
 
+  # def eval([:pry, x], e) do
+  #   IEx.pry
+  # end
+
   def eval([f | xs], e) when is_atom(f) do
-    eval([E.get_fn(f) | map_eval(xs, e)], e)
+    eval([E.get_fn(f) | xs], e)
   end
 
-  def eval([f | xs], _e) when is_function(f) do
-    p_apply(f, xs)
+  def eval([f | xs], e) when is_function(f) do
+    {_, arity} = :erlang.fun_info(f, :arity)
+    if arity == 0 do
+      f.()
+    else
+      p_apply(f, map_eval(xs, e))
+    end
   end
 
   def eval([[_ | _] = f | xs], e) do

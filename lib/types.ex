@@ -1,4 +1,4 @@
-defmodule KL.Types do
+defmodule Kl.Types do
   @type expr :: kl_term | function_application
   @type kl_term :: atom
                  | String.t
@@ -8,7 +8,7 @@ defmodule KL.Types do
                  | {:stream, pid}
                  | function
                  | maybe_improper_list
-                 | %KL.SimpleError{}
+                 | %Kl.SimpleError{}
                  | nil
   @type env :: map
   @type function_application :: [operator | list(expr)]

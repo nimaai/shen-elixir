@@ -1,8 +1,8 @@
-alias KL.Env
-alias KL.Eval
+alias Kl.Env
+alias Kl.Eval
 
 defmodule Shen.Bootstrap do
-  alias KL.Reader
+  alias Kl.Reader
   require IEx
 
   def read_and_eval_kl_file(path) do
@@ -30,7 +30,7 @@ defmodule Shen.Bootstrap do
     # if (String.starts_with?(form, "(defun shen.set-lambda-form-entry")) do
     #   :dbg.tracer()
     #   :dbg.p(:all, :c)
-    #   :dbg.tpl(KL.Eval, :eval, 1, :x)
+    #   :dbg.tpl(Kl.Eval, :eval, 1, :x)
     # end
 
     form
@@ -85,7 +85,7 @@ end
 Env.init
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tp(KL.Eval, :eval, 1, :x)
+# :dbg.tp(Kl.Eval, :eval, 1, :x)
 start_time = DateTime.utc_now |> DateTime.to_unix
 Enum.each(
   [

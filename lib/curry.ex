@@ -1,4 +1,4 @@
-defmodule KL.Curry do
+defmodule Kl.Curry do
 
   @spec curry(function) :: function
   def curry(fun) do

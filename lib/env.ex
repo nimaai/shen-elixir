@@ -1,7 +1,7 @@
-defmodule KL.Env do
-  alias KL.Bindings, as: B
-  alias KL.Primitives, as: P
-  alias KL.Types, as: T
+defmodule Kl.Env do
+  alias Kl.Bindings, as: B
+  alias Kl.Primitives, as: P
+  alias Kl.Types, as: T
   require IEx
 
   @spec init :: {:error, any} | {:ok, pid}

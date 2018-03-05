@@ -1,6 +1,6 @@
-defmodule KL.Bindings do
+defmodule Kl.Bindings do
   use GenServer
-  alias KL.Types, as: T
+  alias Kl.Types, as: T
 
   def start_link(m) do
     GenServer.start_link(__MODULE__, {:ok, m})

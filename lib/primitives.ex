@@ -1,9 +1,9 @@
-defmodule KL.Primitives do
-  alias KL.Equality
-  alias KL.Env, as: E
-  alias KL.Types, as: T
-  alias KL.Eval
-  import KL.Curry
+defmodule Kl.Primitives do
+  alias Kl.Equality
+  alias Kl.Env, as: E
+  alias Kl.Types, as: T
+  alias Kl.Eval
+  import Kl.Curry
   require IEx
 
   @spec kl_and(boolean, boolean) :: boolean
@@ -16,15 +16,15 @@ defmodule KL.Primitives do
   def kl_if(x, y, z) when is_boolean(x), do: if x, do: y, else: z
 
   @spec trap_error(Exception.t | T.kl_term, fun) :: T.kl_term
-  def trap_error(%KL.SimpleError{} = x, f), do: f.(x)
+  def trap_error(%Kl.SimpleError{} = x, f), do: f.(x)
   def trap_error(x, _f), do: x
 
   @spec simple_error(String.t) :: Exception.t
-  def simple_error(x) when is_binary(x), do: raise KL.SimpleError, message: x
+  def simple_error(x) when is_binary(x), do: raise Kl.SimpleError, message: x
 
   @spec error_to_string(Exception.t) :: String.t
   def error_to_string(x) do
-    if match?(%KL.SimpleError{}, x) do
+    if match?(%Kl.SimpleError{}, x) do
       x.message
     else
       Exception.format_banner(:error, x)
@@ -148,9 +148,10 @@ defmodule KL.Primitives do
   @spec kl_tl(list(T.kl_term)) :: T.kl_term
   def kl_tl(x), do: tl(x)
 
-  @spec write_byte({:stream, pid}, integer) :: integer
-  def write_byte({:stream, s}, b) do
-    IEx.pry
+  # TODO: remove tuple
+  @spec write_byte(integer, {:stream, pid}) :: integer
+  def write_byte(b, :stdio), do: write_byte(b, {:stream, :stdio})
+  def write_byte(b, {:stream, s}) do
     :ok = IO.binwrite(s, <<b>>)
     b
   end

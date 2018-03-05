@@ -1,6 +1,6 @@
-defmodule KL.Repl do
-  alias KL.Reader
-  alias KL.Eval
+defmodule Kl.Repl do
+  alias Kl.Reader
+  alias Kl.Eval
   require IEx
 
   def repl(num \\ 0, read_so_far \\ [], leading_text \\ nil) do
@@ -26,7 +26,7 @@ defmodule KL.Repl do
     end
 
     cond do
-      match?(%KL.SimpleError{}, v) ->
+      match?(%Kl.SimpleError{}, v) ->
         IO.puts(v.message)
         IO.binwrite("\n")
       Exception.exception?(v) -> Exception.format(:error, v) |> IO.puts
@@ -58,7 +58,7 @@ end
 
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tpl(KL.Eval, :eval, 2, :x)
+# :dbg.tpl(Kl.Eval, :eval, 2, :x)
 Process.flag(:trap_exit, true)
-KL.Env.init
-KL.Repl.repl
+Kl.Env.init
+Kl.Repl.repl
