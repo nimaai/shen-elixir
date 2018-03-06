@@ -129,7 +129,7 @@ defmodule Kl.Primitives do
 
   @spec get_from_address({:vector, pid}, integer) :: T.kl_term
   def get_from_address({:vector, p}, y) do
-    Agent.get(p, fn(a) -> :array.get(a, y) end)
+    Agent.get(p, fn(a) -> :array.get(y, a) end)
   end
 
   @spec absvector?(T.kl_term) :: boolean

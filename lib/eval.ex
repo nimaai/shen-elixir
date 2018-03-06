@@ -67,7 +67,8 @@ defmodule Kl.Eval do
   # end
 
   def eval([f | xs], e) when is_atom(f) do
-    eval([E.get_fn(f) | xs], e)
+    ff = e[f] || E.get_fn(f)
+    eval([ff | xs], e)
   end
 
   def eval([f | xs], e) when is_function(f) do
