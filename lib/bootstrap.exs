@@ -27,12 +27,6 @@ defmodule Shen.Bootstrap do
   end
 
   def eval_form(form) do
-    if (String.starts_with?(form, "(for-each")) do
-      :dbg.tracer()
-      :dbg.p(:all, :c)
-      :dbg.tpl(Kl.Eval, :eval, 2, :x)
-    end
-
     form
     # |> IO.inspect
     |> Reader.tokenise

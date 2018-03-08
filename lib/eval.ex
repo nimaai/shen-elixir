@@ -27,11 +27,6 @@ defmodule Kl.Eval do
     fn -> eval(x, e) end
   end
 
-  # NOTE: possible shen override
-  # def eval([:thaw, expr], e) do
-  #   eval(expr, e).()
-  # end
-
   def eval([:if, x, y, z], e) do
     if eval(x, e), do: eval(y, e), else: eval(z, e)
   end
@@ -62,9 +57,10 @@ defmodule Kl.Eval do
     eval(f, e).(eval(x, e))
   end
 
-  # def eval([:pry, x], e) do
-  #   IEx.pry
-  # end
+  #################### DEBUGGING #######################
+  def eval([:pry, x], _e), do: IEx.pry
+  def eval([:inspect, x], e), do: IO.inspect(eval(x, e))
+  ######################################################
 
   def eval([f | xs], e) when is_atom(f) do
     ff = e[f] || E.get_fn(f)

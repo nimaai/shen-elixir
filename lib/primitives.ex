@@ -117,19 +117,40 @@ defmodule Kl.Primitives do
 
   @spec absvector(integer) :: {:vector, pid}
   def absvector(x) do
-    {:ok, p} = Agent.start_link(fn -> :array.new(x) end)
+    {:ok, p} = Agent.start_link(
+      fn ->
+        try do
+          :array.new(x)
+        rescue
+          ex -> ex
+        end
+      end)
     {:vector, p}
   end
 
   @spec put_to_address({:vector, pid}, integer, T.kl_term) :: {:vector, pid}
   def put_to_address({:vector, p}, y, z) do
-    Agent.update(p, fn(a) -> :array.set(y, z, a) end)
+    Agent.update(p,
+                 fn(a) ->
+                   try do
+                     :array.set(y, z, a)
+                   rescue
+                     ex -> ex
+                   end
+                 end)
     {:vector, p}
   end
 
   @spec get_from_address({:vector, pid}, integer) :: T.kl_term
   def get_from_address({:vector, p}, y) do
-    Agent.get(p, fn(a) -> :array.get(y, a) end)
+    Agent.get(p,
+              fn(a) ->
+                try do
+                  :array.get(y, a)
+                rescue
+                  ex -> ex
+                end
+              end)
   end
 
   @spec absvector?(T.kl_term) :: boolean
@@ -137,6 +158,7 @@ defmodule Kl.Primitives do
   def absvector?(_), do: false
 
   @spec cons?(list(T.kl_term)) :: boolean
+  def cons?([]), do: false
   def cons?(x), do: is_list(x)
 
   @spec cons(T.kl_term, T.kl_term) :: list(T.kl_term)
