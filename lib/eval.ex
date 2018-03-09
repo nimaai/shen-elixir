@@ -60,6 +60,10 @@ defmodule Kl.Eval do
   #################### DEBUGGING #######################
   def eval([:pry, x], _e), do: IEx.pry
   def eval([:inspect, x], e), do: IO.inspect(eval(x, e))
+  def eval([:inspect, x, y], e) do
+    IO.inspect(eval(x, e))
+    IO.inspect(eval(y, e))
+  end
   ######################################################
 
   def eval([f | xs], e) when is_atom(f) do
@@ -81,7 +85,7 @@ defmodule Kl.Eval do
   end
 
   def eval(x, e) when is_atom(x) do
-    e[x] || x
+    if Map.has_key?(e, x), do: e[x], else: x
   end
 
   def eval(x, _e) do
