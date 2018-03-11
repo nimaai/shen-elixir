@@ -37,7 +37,7 @@ defmodule Kl.Primitives do
   @spec set(atom, T.kl_term) :: atom
   def set(x, y) do
     :ok = E.set_var(x, y)
-    x
+    y
   end
 
   @spec value(atom) :: T.kl_term
