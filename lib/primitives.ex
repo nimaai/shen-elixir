@@ -157,18 +157,18 @@ defmodule Kl.Primitives do
   def absvector?({:vector, p}) when is_pid(p), do: true
   def absvector?(_), do: false
 
-  @spec cons?(list(T.kl_term)) :: boolean
-  def cons?([]), do: false
-  def cons?(x), do: is_list(x)
+  @spec cons?(T.kl_term) :: boolean
+  def cons?({:cons, _h, _t}), do: true
+  def cons?(_), do: false
 
-  @spec cons(T.kl_term, T.kl_term) :: list(T.kl_term)
-  def cons(x, y), do: [x | y]
+  @spec cons(T.kl_term, T.kl_term) :: {:cons, T.kl_term, T.kl_term}
+  def cons(x, y), do: {:cons, x, y}
 
-  @spec kl_hd(list(T.kl_term)) :: T.kl_term
-  def kl_hd(x), do: hd(x)
+  @spec kl_hd({:cons, T.kl_term, T.kl_term}) :: T.kl_term
+  def kl_hd({:cons, h, _}), do: h
 
-  @spec kl_tl(list(T.kl_term)) :: T.kl_term
-  def kl_tl(x), do: tl(x)
+  @spec kl_tl({:cons, T.kl_term, T.kl_term}) :: T.kl_term
+  def kl_tl({:cons, _, t}), do: t
 
   # TODO: remove tuple
   @spec write_byte(integer, {:stream, pid | :stdio} | :stdio) :: integer
@@ -210,8 +210,11 @@ defmodule Kl.Primitives do
   @spec equal?(T.kl_term, T.kl_term) :: boolean
   def equal?(x, y), do: Equality.equal?(x, y)
 
-  @spec eval_kl(list) :: T.kl_term
-  def eval_kl(x), do: Eval.eval(x, %{})
+  @spec eval_kl({:cons, T.kl_term, T.kl_term} | T.kl_term) :: T.kl_term
+  def eval_kl({:cons, _, _} = x) do
+    x |> cons_to_list |> Eval.eval(%{})
+  end
+  def eval_kl(x), do: x
 
   @spec get_time(T.kl_term) :: integer
   def get_time(x) do
@@ -273,4 +276,8 @@ defmodule Kl.Primitives do
     |> Enum.map(fn({n, f}) -> {n, curry(f)} end)
     |> Enum.into(%{})
   end
+
+  @spec cons_to_list({:cons, T.kl_term, T.kl_term} | T.kl_term) :: list(T.kl_term) | T.kl_term
+  def cons_to_list({:cons, h, t}), do: [cons_to_list(h) | cons_to_list(t)]
+  def cons_to_list(x), do: x
 end
