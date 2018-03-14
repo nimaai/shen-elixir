@@ -11,7 +11,11 @@ defmodule Kl.Env do
       {:ok, gp}= B.start_link(%{
         "*stinput*": :stdio,
         "*stoutput*": :stdio,
-        "*home-directory*": ""
+        "*home-directory*": "",
+        "*language*": "Elixir",
+        "*implementation*": System.version,
+        "*port*": Mix.Project.config[:version],
+        "*porters*": "Matus Kmit"
       })
 
       %{vars: gp,
