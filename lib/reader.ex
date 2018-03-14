@@ -3,7 +3,7 @@ defmodule Kl.Reader do
 
   def tokenise(expr) do
     expr
-    |> String.replace(~r/([\(\)])/, " \\1 ")
+    |> String.replace(~r/([\(\)])/, " \\1 ") # NOTE: replaces also "(", ")" inside strings
     |> split
   end
 
@@ -13,7 +13,8 @@ defmodule Kl.Reader do
       [],
       fn(s, acc) ->
         if Regex.match?(~r/("[^"]*")/, s) do
-          acc ++ [{:string, s}]
+          # NOTE: fix wrong replacement of "(", ")" inside strings
+          acc ++ [{:string, String.replace(s, ~r/( ([\(\)]) )/, "\\2")}]
         else
           acc ++ String.split(s)
         end
