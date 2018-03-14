@@ -193,8 +193,8 @@ defmodule Kl.Primitives do
   @spec open(String.t, atom) :: {:stream, File.io_device}
   def open(x, y) do
     m = case y do
-      :in -> :write
-      :out -> :read
+      :in -> :read
+      :out -> :write
       _ -> raise "invalid direction"
     end
     {:ok, p} = File.open(x, [m])
