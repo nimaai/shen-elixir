@@ -1,163 +1,123 @@
-defmodule Klambda.Eval do
-  alias Klambda.Lambda
-  alias Klambda.Env
+defmodule Kl.Eval do
+  alias Kl.Env, as: E
+  alias Kl.Types, as: T
   require IEx
   require Integer
 
-  # TODO: check eval args in function calls !
-  # TODO: raise error on arg type mismatch !
-
-  ##################### FUNCTIONS AND BINDINGS ###################
-
-  def eval([:defun, fn_name, params, body]) when is_atom(fn_name) do
-    bbody =
-      if match?([], params) do
-        Lambda.create(nil, body)
-      else
-        [fst | rest] = Enum.reverse(params)
-        Enum.reduce(
-          rest,
-          Lambda.create(fst, body),
-          fn(param, lambda_acc) ->
-            Lambda.create(param, lambda_acc)
-          end
-        )
-      end
-    :ok = Env.define_function(fn_name, bbody)
-    fn_name
+  @spec eval(T.expr, T.env) :: T.expr
+  def eval([:defun, f, [], b], %{}) do
+    :ok = E.set_fn(f, fn -> eval(b, %{}) end)
+    f
   end
 
-  def eval([:lambda, param, body]) do
-    if is_atom(param) do
-      Lambda.create(param, body)
-    else
-      throw {:error, "Required argument is not a symbol"}
-    end
+  def eval([:defun, f, ps, b], %{}) do
+    :ok = E.set_fn(f, curry_defun(ps, b, %{}))
+    f
   end
 
-  def eval([:lambda, _id, _, _] = lambda) do
-    lambda
+  def eval([:lambda, p, b], e) when is_atom(p) do
+    fn(v) -> eval(b, Map.put(e, p, v)) end
   end
 
-  def eval([:let, sym, val, body]) do
-    eval [Lambda.create(sym, body), eval(val)]
+  def eval([:let, p, v, b], e) do
+    eval(b, Map.put(e, p, eval(v, e)))
   end
 
-  def eval([:freeze, expr]) do
-    Lambda.create(nil, expr)
+  def eval([:freeze, x], e) do
+    fn -> eval(x, e) end
   end
 
-  # NOTE: possible shen override
-  # def eval([:thaw, expr]) do
-  #   [:lambda, _id, nil, body] = eval(expr)
-  #   eval(body)
-  # end
-
-  ##################### CONDITIONALS #############################
-
-  def eval([:if, condition, consequent, alternative]) do
-    if eval(condition) do
-      eval(consequent)
-    else
-      eval(alternative)
-    end
+  def eval([:if, x, y, z], e) do
+    if eval(x, e), do: eval(y, e), else: eval(z, e)
   end
 
-  def eval([:cond, [condition, consequent] | rest]) do
-    if eval(condition) do
-      eval(consequent)
-    else
-      eval([:cond | rest])
-    end
+  def eval([:cond, [x, y] | z], e) do
+    if eval(x, e), do: eval(y, e), else: eval([:cond | z], e)
   end
 
-  def eval([:cond]), do: []
+  def eval([:cond], _e), do: []
 
-  def eval([:and, arg1, arg2]) do
-    eval(arg1) and eval(arg2)
+  def eval([:and, x, y], e) do
+    eval(x, e) and eval(y, e)
   end
 
-  def eval([:or, arg1, arg2]) do
-    eval(arg1) or eval(arg2)
+  def eval([:or, x, y], e) do
+    eval(x, e) or eval(y, e)
   end
 
-  ##################### ERROR HANDLING #####################################
-
-  def eval([:"trap-error", body, handler]) do
-    evaled_body = eval_or_simple_error(body)
-    evaled_handler = eval(handler)
-    eval([[[:"trap-error"], evaled_body], evaled_handler])
-  end
-
-  def eval([:"trap-error", body]) do
-    evaled_body = eval_or_simple_error(body)
-    eval([[:"trap-error"], evaled_body])
-  end
-
-  ###################### FUNCTION APPLICATION (PARTIAL) ####################
-
-  def eval([f]) when is_atom(f) do
-    func = Env.lookup_function(f)
-    cond do
-      is_function(func) -> func
-      match?([:lambda, _id, nil, _body], func) ->
-        [_, _, _, body] = func
-        eval(body)
-      true -> func
-    end
-  end
-
-  def eval([[:lambda, _id, nil, body]]) do
-    eval(body)
-  end
-
-  def eval([_]) do
-    throw {:error, "Illegal function call"}
-  end
-
-  def eval([f, arg]) when is_function(f) do
-    f.(arg)
-  end
-
-  def eval([f, arg]) when is_atom(f) do
-    eval [Env.lookup_function(f), eval(arg)]
-  end
-
-  def eval([[:lambda, var, body], arg]) do
-    eval [Lambda.create(var, body), arg]
-  end
-
-  def eval([[:lambda, _id, param, _] = lambda, arg]) do
-    eval Lambda.beta_reduce(lambda, param, eval(arg))
-  end
-
-  def eval([[_ | _] = f, arg]) do
-    eval [eval(f), eval(arg)]
-  end
-
-  def eval([f | args]) do
-    # eval [[[f], arg1], arg2] ... or
-    # eval [[[lambda x [lambda y ...]], arg1] arg2]
-
-    f_expr = if match?([:lambda | _], f), do: f, else: [f]
-    eval(
-      Enum.reduce(args, f_expr, fn(acc, el) -> [el, acc] end)
-    )
-  end
-
-  ##########################################################################
-
-  def eval(term) do
-    term
-  end
-
-  ##########################################################################
-
-  defp eval_or_simple_error(expr) do
+  def eval([:"trap-error", x, f], e) do
     try do
-      eval(expr)
-    catch
-      {:"simple-error", _message} = simple_error -> simple_error
+      eval(x, e)
+    rescue
+      ex -> eval(f, e).(ex)
+    end
+  end
+
+  def eval([[:lambda, _, _] = f, x], e) do
+    eval(f, e).(eval(x, e))
+  end
+
+  #################### DEBUGGING #######################
+  # def eval([:pry, x], _e), do: IEx.pry
+  # def eval([:inspect, x], e), do: IO.inspect(eval(x, e))
+  # def eval([:inspect, x, y], e) do
+  #   IO.inspect(eval(x, e))
+  #   IO.inspect(eval(y, e))
+  # end
+  def eval([:"pry-trap", x, f], e) do
+    try do
+      eval(x, e)
+    rescue
+      ex -> IEx.pry
+    end
+  end
+
+  ######################################################
+
+  def eval([f | xs], e) when is_atom(f) do
+    ff = e[f] || E.get_fn(f)
+    eval([ff | xs], e)
+  end
+
+  def eval([f | xs], e) when is_function(f) do
+    {_, arity} = :erlang.fun_info(f, :arity)
+    if arity == 0 do
+      f.()
+    else
+      p_apply(f, map_eval(xs, e))
+    end
+  end
+
+  def eval([[_ | _] = f | xs], e) do
+    eval([eval(f, e) | map_eval(xs, e)], e)
+  end
+
+  def eval(x, e) when is_atom(x) do
+    if Map.has_key?(e, x), do: e[x], else: x
+  end
+
+  def eval(x, _e) do
+    x
+  end
+
+  @spec p_apply(fun, list(T.kl_term)) :: T.kl_term
+  def p_apply(f, xs) do
+    Enum.reduce(xs, f, fn(x, f) -> f.(x) end)
+  end
+
+  @spec map_eval(list(T.expr), T.env) :: list(T.kl_term)
+  def map_eval(xs, e) do
+    Enum.map(xs, fn(x) -> eval(x, e) end)
+  end
+
+  @spec curry_defun(list(atom), T.expr, T.env) :: T.kl_term | fun
+  def curry_defun([], b, e) do
+    eval(b, e)
+  end
+
+  def curry_defun([p | r], b, e) do
+    fn(v) ->
+      curry_defun(r, b, Map.put(e, p, v))
     end
   end
 end

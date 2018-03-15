@@ -1,9 +1,9 @@
-defmodule Klambda.Reader do
+defmodule Kl.Reader do
   require IEx
 
   def tokenise(expr) do
     expr
-    |> String.replace(~r/([\(\)])/, " \\1 ")
+    |> String.replace(~r/([\(\)])/, " \\1 ") # NOTE: replaces also "(", ")" inside strings
     |> split
   end
 
@@ -13,7 +13,8 @@ defmodule Klambda.Reader do
       [],
       fn(s, acc) ->
         if Regex.match?(~r/("[^"]*")/, s) do
-          acc ++ [{:string, s}]
+          # NOTE: fix wrong replacement of "(", ")" inside strings
+          acc ++ [{:string, String.replace(s, ~r/( ([\(\)]) )/, "\\2")}]
         else
           acc ++ String.split(s)
         end
@@ -31,10 +32,10 @@ defmodule Klambda.Reader do
       token =~ ~r/\s/ ->
         throw {:error, "Unexpected whitespace found in token: #{token}"}
       # If the token contains digits separated by a decimal point
-      token =~ ~r/^\d+\.\d+$/ ->
+      token =~ ~r/^-?\d+\.\d+$/ ->
         String.to_float token
       # If the token contains only digits
-      token =~ ~r/^\d+$/ ->
+      token =~ ~r/^-?\d+$/ ->
         String.to_integer token
       token == "true" ->
         true
