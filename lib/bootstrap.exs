@@ -1,9 +1,8 @@
-alias Klambda.Env
-alias Klambda.Eval
+alias Kl.Env
+alias Kl.Eval
 
 defmodule Shen.Bootstrap do
-  alias Klambda.Reader
-  alias Klambda.Eval
+  alias Kl.Reader
   require IEx
 
   def read_and_eval_kl_file(path) do
@@ -28,17 +27,11 @@ defmodule Shen.Bootstrap do
   end
 
   def eval_form(form) do
-    # if (String.starts_with?(form, "(defun shen.set-lambda-form-entry")) do
-    #   :dbg.tracer()
-    #   :dbg.p(:all, :c)
-    #   :dbg.tpl(Klambda.Eval, :eval, 1, :x)
-    # end
-
     form
     |> Reader.tokenise
     |> Reader.read
     |> hd
-    |> Eval.eval
+    |> Eval.eval(%{})
   end
 
   defp read_form(file, form_iod, left, right) do
@@ -86,7 +79,7 @@ end
 Env.init
 # :dbg.tracer()
 # :dbg.p(:all, :c)
-# :dbg.tp(Klambda.Eval, :eval, 1, :x)
+# :dbg.tp(Kl.Eval, :eval, 2, :x)
 start_time = DateTime.utc_now |> DateTime.to_unix
 Enum.each(
   [
@@ -107,9 +100,9 @@ Enum.each(
   ],
   fn(file) ->
     IO.puts("loading: #{file}")
-    Shen.Bootstrap.read_and_eval_kl_file("klambda-sources/#{file}")
+    Shen.Bootstrap.read_and_eval_kl_file("kl-sources/#{file}")
   end
 )
 end_time = DateTime.utc_now |> DateTime.to_unix
 IO.puts("loaded in #{end_time - start_time} seconds")
-Eval.eval([:"shen.shen"])
+Eval.eval([:"shen.shen"], %{})
