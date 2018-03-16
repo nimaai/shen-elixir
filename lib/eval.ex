@@ -1,17 +1,13 @@
 defmodule Kl.Eval do
   alias Kl.Env, as: E
   alias Kl.Types, as: T
+  alias Kl.Code, as: C
   require IEx
   require Integer
 
   @spec eval(T.expr, T.env) :: T.expr
-  def eval([:defun, f, [], b], %{}) do
-    :ok = E.set_fn(f, fn -> eval(b, %{}) end)
-    f
-  end
-
   def eval([:defun, f, ps, b], %{}) do
-    :ok = E.set_fn(f, curry_defun(ps, b, %{}))
+    :ok = E.set_fn(f, C.compile_function(ps, b))
     f
   end
 
@@ -81,10 +77,8 @@ defmodule Kl.Eval do
 
   def eval([f | xs], e) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
-    if arity == 0 do
-      f.()
-    else
-      p_apply(f, map_eval(xs, e))
+    if arity == length(xs) do
+      apply(f, map_eval(xs, e))
     end
   end
 

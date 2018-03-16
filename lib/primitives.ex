@@ -48,6 +48,13 @@ defmodule Kl.Primitives do
 
   @spec add(number, number) :: number
   def add(x, y), do: x + y
+  # def add(x, y) do
+  #   try do
+  #     x + y
+  #   rescue
+  #     ex -> IEx.pry
+  #   end
+  # end
 
   @spec subtract(number, number) :: number
   def subtract(x, y), do: x - y
@@ -273,8 +280,6 @@ defmodule Kl.Primitives do
       "get-time": &get_time/1,
       type: &type/2
     }
-    |> Enum.map(fn({n, f}) -> {n, curry(f)} end)
-    |> Enum.into(%{})
   end
 
   @spec cons_to_list({:cons, T.kl_term, T.kl_term} | T.kl_term) :: list(T.kl_term) | T.kl_term
