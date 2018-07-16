@@ -1,0 +1,13 @@
+* Elixir port of Shen
+
+This is an interpreted port of [Shen](shenlanguage.org). It is very slow. It has only one failing test.
+
+* Klambda REPL
+
+`mix run lib/repl.exs`
+
+* Bootstrap Shen
+
+`mix run lib/bootstrap.exs`
+
+On a MacBook Pro (2016, 2.9GHz Intel Core 17, 16 GB RAM) it takes about 85 seconds.
